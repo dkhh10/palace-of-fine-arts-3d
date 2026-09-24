@@ -264,9 +264,9 @@ Station 2 frieze/soffit over-warm and the shafts' a* deficit (MATERIALS; accepte
 boxes after the full far-tree re-bake (BAKE/EXPORT; QA 23 residual 1 partially re-opened); cam05 shade p10 −5.9 % vs Cycles with the gate on (VIEWER; ungated +6.8 %); frame rate
 22-37 fps at the stations, never measured idle (perf re-take); cam01/cam05 backdrop bands −1..3 % hf after R3 (ENV, named); the 4.3x hf gap to the photo at cam06 is the R1 ceiling; cycles_p9/cam06 predates ENV R3 (re-render before any station-6 parity claim); the colonnade-deck dark band at 4K (ARCH/LIGHT); scripts/build_master.py APPENDS, CLAUDE.md's "by linking" is stale (user to amend).
 
-# Phase 10 — photo-derived appearance on the existing mesh (lead, 2026-09-24; decisions.md 2026-09-24 x6; QA 27: PENDING, fill on the verdict)
+# Phase 10 — photo-derived appearance on the existing mesh (lead, 2026-09-24; decisions.md 2026-09-24 x7; QA 27 20e2b70: PHASE 10 GATE PASSED, hero 4.26 (+0.21), stations 3.51 / 3.12 / 3.05 / 3.37 / 3.15; name sweep 0 hits, 95 rays 0 fails, 36 tiles viewed)
 ## Deliverables
-- master.blend rebuilt with Phase 10 (ENV r1 ea12906, ENV r2 fea53a2, projection e4116b8 at weight 0, materials r2: PENDING merge id); the six Cycles stations in
+- master.blend rebuilt with Phase 10 (ENV r1 ea12906, ENV r2 fea53a2, projection e4116b8 at weight 0, materials r2 4e1feb9; master rebuilt 3891297); the six Cycles stations in
   renders/qa_comparisons/cycles_p10/ (scripts/p10_cycles_refs.sh); QA 27 report docs/qa_round_27.md; sheets env_p10_sheet.png, env_p10r2_sheet.png, mat_p10_sheet.png,
   mat_p10w_sheet.png, round27_gate.png.
 - Infrastructure kept for a future round: the `UVBake` atlas layer on 37 rotunda meshes (arch_uvbake.py, wired into arch_build.py), the registration + projection +
@@ -278,7 +278,7 @@ boxes after the full far-tree re-bake (BAKE/EXPORT; QA 23 residual 1 partially r
   lowered so the central arch opening is uncovered (2,065 -> 0 px); tris +0.9 / +1.3 / +0.5 % more.
 - Projection r1: shelved at weight 0. Registration failed its held-out test (20.4 px median; 40 of 43 cameras behind the east shore); visible effect had been confined to
   the column shafts. Column tint carried into materials r2 as a plain retune.
-- Materials r2 (water murk / reflection breakup, foliage colour, column tint): PENDING.
+- Materials r2: lagoon murk + wind-wave layer (reflection Lx 12.1 -> 6.7 px vs ref 7.9, R-B +50), conifer luma 54 -> 100 (ref 108), column shafts 103 / 28.7 / 0.616 vs ref 96.8 / 24.8 / 0.585; atlas at weight 0 is a no-op on screen (QA 27).
 ## Known issues (owners), carried
 Registration needs a per-image scale solve (PnP from >= 6 hand picks) or a controlled site capture (option C) before the atlas can be raised above weight 0 (MATERIALS/user);
 ORN attic reliefs, frieze and drum band have no UVBake layer so no projection can reach them (ORN); the colonnade is uncovered (MATERIALS); a fresh ARCH build re-lays 4
@@ -286,3 +286,8 @@ ornament courses so the atlas hashes are advisory in the rebuild hook (ARCH); EN
 widening is keyed on the note text (ENV); willow_03 crown may reach 36.7 m vs the 37 m podium ring (ENV, accepted); cam02 shows the new columns over the rotunda's left base
 (QA 27 scores it); export needs an impostor rebake and new EXPM_*_LOD1_thin rows before any web deploy (EXPORT); NE-box sky/dark shares and box 2 depend on the leaf colour
 (materials r2 measures).
+QA 27 §5 adds (docs/qa_round_27.md): rose shafts go violet in shade at cam02 / mauve at cam06 (the -10 deg hue and the x1.22 value are uncoupled in code) (MATERIALS); cypresses
+blue-grey in shade, lime in sun, grainy (ENV / MATERIALS); hero willow still a dark hedge, box 2 dark 29.2 vs 8.9 % (ENV / MATERIALS); water dark gaps 6.4 vs 16.2 %, reflection
+lum 120 vs 162, the murk is Cycles-only and web/src/water.js does not carry it (MATERIALS / VIEWER); leaf grade lost in the glTF export, Phase 6 parity references stale for water,
+columns and foliage (EXPORT / LEAD); the weight-0 atlas still costs two texture samples per concrete shader (MATERIALS); hero waterline coping triangles since Phase 9 (ENV);
+QA 26 carries unchanged.

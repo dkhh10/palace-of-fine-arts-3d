@@ -1,0 +1,127 @@
+00:00.336  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+
+=== CAM_qa_01_lagoon_hero -> bay 0 (face az 82.0)
+  z= 16 PASS-clear   first=-                                        | clear (sky)
+  z= 17 PASS-through first=ARCH_rotunda_inner_wall_04               | ARCH_rotunda_inner_wall_04@117.2m(ap -14.2, r 5.4) | ARCH_rotunda_inner_wall_04@118.4m(ap -15.4, r 5.7) | ARCH_rotunda_wall_04@122.6m(ap -19.5, r 6.4)
+  z= 18 PASS-through first=ARCH_rotunda_ceiling_ribs                | ARCH_rotunda_ceiling_ribs@117.1m(ap -13.8, r 6.7) | ARCH_rotunda_ceiling_ribs@117.4m(ap -14.2, r 6.8) | ARCH_rotunda_inner_wall_04@118.7m(ap -15.4, r 7.1)
+  z= 19 PASS-through first=ARCH_rotunda_ceiling_ribs                | ARCH_rotunda_ceiling_ribs@116.4m(ap -12.9, r 7.9) | ARCH_rotunda_ceiling_ribs@116.4m(ap -12.9, r 7.9) | ARCH_rotunda_ceiling_field@116.5m(ap -13.0, r 7.9)
+  z= 20 PASS-through first=ARCH_rotunda_ceiling_ribs                | ARCH_rotunda_ceiling_ribs@114.4m(ap -10.6, r 8.8) | ARCH_rotunda_ceiling_ribs@114.8m(ap -11.0, r 8.9) | ARCH_rotunda_ceiling_field@115.1m(ap -11.4, r 8.9)
+  z= 21 PASS-through first=ARCH_rotunda_ceiling_field               | ARCH_rotunda_ceiling_field@113.6m(ap -9.6, r 9.9) | ARCH_rotunda_inner_wall_04@118.3m(ap -14.2, r 11.0) | ARCH_rotunda_inner_wall_04@119.6m(ap -15.4, r 11.2)
+  z= 22 PASS-soffit  first=ARCH_rotunda_vault_coffers_00            | ARCH_rotunda_vault_coffers_00@87.9m(ap +15.7, r 4.9) | ARCH_rotunda_vault_coffers_00@88.0m(ap +15.5, r 5.0) | ARCH_rotunda_inner_wall_00@88.2m(ap +15.4, r 5.0)
+
+=== CAM_qa_02_lagoon_ne_threequarter -> bay 7 (face az 397.0)
+  z= 16 PASS-through first=ARCH_rotunda_inner_archivolt_02          | ARCH_rotunda_inner_archivolt_02@97.6m(ap -8.0, r 12.7) | ARCH_rotunda_inner_wall_02@97.7m(ap -8.1, r 12.8) | ARCH_rotunda_inner_wall_02@99.0m(ap -9.3, r 13.4)
+  z= 17 PASS-through first=INST_rosette_ceiling_007_LOD1            | INST_rosette_ceiling_007_LOD1@97.8m(ap -7.9, r 13.3) | INST_rosette_ceiling_007_LOD1@98.0m(ap -8.1, r 13.3) | INST_rosette_ceiling_007_LOD1@98.0m(ap -8.1, r 13.4)
+  z= 18 PASS-through first=ARCH_rotunda_ceiling_ribs                | ARCH_rotunda_ceiling_ribs@97.0m(ap -6.9, r 13.4) | ARCH_rotunda_ceiling_field@97.6m(ap -7.5, r 13.7) | ARCH_rotunda_ceiling_ribs@97.7m(ap -7.5, r 13.7)
+  z= 19 PASS-through first=ARCH_rotunda_ceiling_ribs                | ARCH_rotunda_ceiling_ribs@95.6m(ap -5.4, r 13.4) | ARCH_rotunda_ceiling_field@96.3m(ap -6.0, r 13.7) | ARCH_rotunda_inner_wall_02@98.7m(ap -8.1, r 14.9)
+  z= 20 PASS-through first=ARCH_rotunda_ceiling_ribs                | ARCH_rotunda_ceiling_ribs@94.6m(ap -4.2, r 13.6) | ARCH_rotunda_ceiling_ribs@94.7m(ap -4.3, r 13.7) | ARCH_rotunda_ceiling_field@94.8m(ap -4.4, r 13.7)
+  z= 21 PASS-through first=ARCH_rotunda_ceiling_ribs                | ARCH_rotunda_ceiling_ribs@92.1m(ap -1.8, r 13.2) | ARCH_rotunda_ceiling_ribs@92.9m(ap -2.4, r 13.5) | ARCH_rotunda_ceiling_field@93.0m(ap -2.5, r 13.6)
+  z= 22 PASS-soffit  first=ARCH_rotunda_vault_coffers_07            | ARCH_rotunda_vault_coffers_07@71.9m(ap +16.1, r 5.0) | ARCH_rotunda_vault_07@72.2m(ap +15.9, r 5.1) | ARCH_rotunda_inner_wall_07@72.7m(ap +15.4, r 5.3)
+
+=== CAM_qa_03_colonnade_walk -> bay 2 (face az 172.0)
+  z= 16 PASS-through first=ARCH_rotunda_inner_wall_06               | ARCH_rotunda_inner_wall_06@98.4m(ap -14.2, r 5.5) | ARCH_rotunda_inner_wall_06@99.6m(ap -15.4, r 5.8) | ARCH_rotunda_wall_06@103.9m(ap -19.5, r 6.7)
+  z= 17 PASS-through first=ARCH_rotunda_ceiling_ribs                | ARCH_rotunda_ceiling_ribs@98.2m(ap -13.6, r 6.9) | ARCH_rotunda_ceiling_ribs@98.7m(ap -14.2, r 7.0) | ARCH_rotunda_inner_wall_06@100.0m(ap -15.4, r 7.3)
+  z= 18 PASS-through first=ARCH_rotunda_ceiling_field               | ARCH_rotunda_ceiling_field@97.5m(ap -12.7, r 8.1) | ARCH_rotunda_inner_wall_06@99.1m(ap -14.2, r 8.5) | ARCH_rotunda_inner_wall_06@100.3m(ap -15.4, r 8.8)
+  z= 19 PASS-through first=ARCH_rotunda_ceiling_ribs                | ARCH_rotunda_ceiling_ribs@95.5m(ap -10.3, r 9.0) | ARCH_rotunda_ceiling_ribs@96.2m(ap -11.0, r 9.1) | ARCH_rotunda_inner_wall_06@99.5m(ap -14.2, r 10.0)
+  z= 20 PASS-through first=ARCH_rotunda_ceiling_field               | ARCH_rotunda_ceiling_field@94.7m(ap -9.2, r 10.1) | ARCH_rotunda_inner_wall_06@99.9m(ap -14.2, r 11.5) | ARCH_rotunda_inner_wall_06@101.1m(ap -15.4, r 11.8)
+  z= 21 PASS-through first=ARCH_rotunda_ceiling_ribs                | ARCH_rotunda_ceiling_ribs@92.0m(ap -6.2, r 10.6) | ARCH_rotunda_ceiling_ribs@92.7m(ap -6.9, r 10.8) | ARCH_rotunda_ceiling_field@92.9m(ap -7.1, r 10.9)
+  z= 22 PASS-soffit  first=ARCH_rotunda_vault_02                    | ARCH_rotunda_vault_02@69.4m(ap +15.7, r 5.0) | ARCH_rotunda_inner_wall_02@69.7m(ap +15.4, r 5.1) | ARCH_rotunda_inner_wall_02@71.0m(ap +14.2, r 5.5)
+
+=== CAM_qa_04_rotunda_ceiling -> bay 0 (face az 82.0)
+  z= 16 PASS-clear   first=-                                        | clear (sky)
+  z= 17 PASS-clear   first=-                                        | clear (sky)
+  z= 18 PASS-clear   first=-                                        | clear (sky)
+  z= 19 PASS-through first=ARCH_rotunda_wall_00                     | ARCH_rotunda_wall_00@28.8m(ap +21.4, r 6.2) | ARCH_rotunda_wall_00@29.0m(ap +21.5, r 6.4) | ARCH_rotunda_archivolt_00@29.5m(ap +21.8, r 6.7)
+  z= 20 PASS-through first=ARCH_rotunda_wall_00                     | ARCH_rotunda_wall_00@28.2m(ap +20.4, r 6.2) | ARCH_rotunda_wall_00@30.0m(ap +21.5, r 7.7)
+  z= 21 PASS-soffit  first=ARCH_rotunda_vault_coffers_00            | ARCH_rotunda_vault_coffers_00@27.2m(ap +19.2, r 5.9) | ARCH_rotunda_vault_00@27.6m(ap +19.5, r 6.2) | ARCH_rotunda_wall_00@27.7m(ap +19.5, r 6.3)
+  z= 22 PASS-soffit  first=ARCH_rotunda_vault_00                    | ARCH_rotunda_vault_00@26.7m(ap +18.4, r 5.9) | ARCH_rotunda_wall_00@28.6m(ap +19.5, r 7.4) | ARCH_rotunda_wall_00@32.0m(ap +21.5, r 10.2)
+
+=== CAM_qa_04_rotunda_ceiling -> bay 1 (face az 127.0)
+  z= 16 PASS-clear   first=-                                        | clear (sky)
+  z= 17 PASS-clear   first=-                                        | clear (sky)
+  z= 18 PASS-clear   first=-                                        | clear (sky)
+  z= 19 PASS-through first=ARCH_rotunda_archivolt_01                | ARCH_rotunda_archivolt_01@29.3m(ap +21.5, r 6.2) | ARCH_rotunda_archivolt_01@29.8m(ap +21.8, r 6.6)
+  z= 20 PASS-through first=ARCH_rotunda_wall_01                     | ARCH_rotunda_wall_01@28.7m(ap +20.5, r 6.2) | ARCH_rotunda_wall_01@30.3m(ap +21.5, r 7.5)
+  z= 21 PASS-soffit  first=ARCH_rotunda_vault_coffers_01            | ARCH_rotunda_vault_coffers_01@27.5m(ap +19.2, r 5.8) | ARCH_rotunda_vault_coffers_01@28.0m(ap +19.5, r 6.2) | ARCH_rotunda_wall_01@28.1m(ap +19.6, r 6.2)
+  z= 22 PASS-soffit  first=ARCH_rotunda_vault_01                    | ARCH_rotunda_vault_01@27.2m(ap +18.5, r 5.9) | ARCH_rotunda_wall_01@28.9m(ap +19.5, r 7.3) | ARCH_rotunda_wall_01@32.3m(ap +21.5, r 10.0)
+
+=== CAM_qa_04_rotunda_ceiling -> bay 2 (face az 172.0)
+  z= 16 PASS-clear   first=-                                        | clear (sky)
+  z= 17 PASS-clear   first=-                                        | clear (sky)
+  z= 18 PASS-clear   first=-                                        | clear (sky)
+  z= 19 PASS-clear   first=-                                        | clear (sky)
+  z= 20 PASS-through first=ARCH_rotunda_wall_02                     | ARCH_rotunda_wall_02@30.3m(ap +20.9, r 6.2) | ARCH_rotunda_wall_02@31.3m(ap +21.5, r 6.9) | ARCH_rotunda_archivolt_02@31.4m(ap +21.6, r 7.0)
+  z= 21 PASS-through first=ARCH_rotunda_wall_02                     | ARCH_rotunda_wall_02@29.6m(ap +19.8, r 6.2) | ARCH_rotunda_wall_02@32.2m(ap +21.5, r 8.2)
+  z= 22 PASS-soffit  first=ARCH_rotunda_vault_02                    | ARCH_rotunda_vault_02@28.7m(ap +18.7, r 6.0) | ARCH_rotunda_wall_02@30.0m(ap +19.5, r 7.0) | ARCH_rotunda_wall_02@33.1m(ap +21.5, r 9.4)
+
+=== CAM_qa_04_rotunda_ceiling -> bay 3 (face az 217.0)
+  z= 16 PASS-clear   first=-                                        | clear (sky)
+  z= 17 PASS-clear   first=-                                        | clear (sky)
+  z= 18 PASS-clear   first=-                                        | clear (sky)
+  z= 19 PASS-clear   first=-                                        | clear (sky)
+  z= 20 PASS-through first=ARCH_rotunda_wall_03                     | ARCH_rotunda_wall_03@32.1m(ap +21.3, r 6.2) | ARCH_rotunda_wall_03@32.4m(ap +21.5, r 6.4) | ARCH_rotunda_archivolt_03@32.8m(ap +21.8, r 6.7)
+  z= 21 PASS-through first=ARCH_rotunda_wall_03                     | ARCH_rotunda_wall_03@31.3m(ap +20.2, r 6.2) | ARCH_rotunda_wall_03@33.2m(ap +21.5, r 7.6)
+  z= 22 PASS-soffit  first=ARCH_rotunda_vault_03                    | ARCH_rotunda_vault_03@30.3m(ap +18.9, r 6.0) | ARCH_rotunda_wall_03@31.2m(ap +19.5, r 6.7) | ARCH_rotunda_wall_03@34.1m(ap +21.5, r 8.8)
+
+=== CAM_qa_04_rotunda_ceiling -> bay 4 (face az 262.0)
+  z= 16 PASS-clear   first=-                                        | clear (sky)
+  z= 17 PASS-clear   first=-                                        | clear (sky)
+  z= 18 PASS-clear   first=-                                        | clear (sky)
+  z= 19 PASS-clear   first=-                                        | clear (sky)
+  z= 20 PASS-through first=ARCH_rotunda_archivolt_04                | ARCH_rotunda_archivolt_04@33.1m(ap +21.6, r 6.2) | ARCH_rotunda_archivolt_04@33.2m(ap +21.7, r 6.3)
+  z= 21 PASS-through first=ARCH_rotunda_wall_04                     | ARCH_rotunda_wall_04@32.2m(ap +20.3, r 6.2) | ARCH_rotunda_wall_04@33.8m(ap +21.5, r 7.4)
+  z= 22 PASS-soffit  first=ARCH_rotunda_vault_04                    | ARCH_rotunda_vault_04@31.1m(ap +19.0, r 6.1) | ARCH_rotunda_wall_04@31.8m(ap +19.5, r 6.6) | ARCH_rotunda_wall_04@34.6m(ap +21.5, r 8.6)
+
+=== CAM_qa_04_rotunda_ceiling -> bay 5 (face az 307.0)
+  z= 16 PASS-clear   first=-                                        | clear (sky)
+  z= 17 PASS-clear   first=-                                        | clear (sky)
+  z= 18 PASS-clear   first=-                                        | clear (sky)
+  z= 19 PASS-clear   first=-                                        | clear (sky)
+  z= 20 PASS-through first=ARCH_rotunda_wall_05                     | ARCH_rotunda_wall_05@32.6m(ap +21.5, r 6.2) | ARCH_rotunda_wall_05@32.7m(ap +21.5, r 6.3) | ARCH_rotunda_archivolt_05@33.1m(ap +21.8, r 6.6)
+  z= 21 PASS-through first=ARCH_rotunda_wall_05                     | ARCH_rotunda_wall_05@31.7m(ap +20.2, r 6.2) | ARCH_rotunda_wall_05@33.5m(ap +21.5, r 7.5)
+  z= 22 PASS-soffit  first=ARCH_rotunda_vault_05                    | ARCH_rotunda_vault_05@30.7m(ap +19.0, r 6.1) | ARCH_rotunda_wall_05@31.5m(ap +19.5, r 6.6) | ARCH_rotunda_wall_05@34.3m(ap +21.5, r 8.7)
+
+=== CAM_qa_04_rotunda_ceiling -> bay 6 (face az 352.0)
+  z= 16 PASS-clear   first=-                                        | clear (sky)
+  z= 17 PASS-clear   first=-                                        | clear (sky)
+  z= 18 PASS-clear   first=-                                        | clear (sky)
+  z= 19 PASS-clear   first=-                                        | clear (sky)
+  z= 20 PASS-through first=ARCH_rotunda_wall_06                     | ARCH_rotunda_wall_06@31.0m(ap +21.0, r 6.2) | ARCH_rotunda_wall_06@31.7m(ap +21.5, r 6.7) | ARCH_rotunda_archivolt_06@32.0m(ap +21.7, r 6.9)
+  z= 21 PASS-through first=ARCH_rotunda_wall_06                     | ARCH_rotunda_wall_06@30.3m(ap +20.0, r 6.2) | ARCH_rotunda_wall_06@32.6m(ap +21.5, r 7.9)
+  z= 22 PASS-soffit  first=ARCH_rotunda_vault_06                    | ARCH_rotunda_vault_06@29.3m(ap +18.8, r 6.0) | ARCH_rotunda_wall_06@30.4m(ap +19.5, r 6.9) | ARCH_rotunda_wall_06@33.5m(ap +21.5, r 9.2)
+
+=== CAM_qa_04_rotunda_ceiling -> bay 7 (face az 397.0)
+  z= 16 PASS-clear   first=-                                        | clear (sky)
+  z= 17 PASS-clear   first=-                                        | clear (sky)
+  z= 18 PASS-clear   first=-                                        | clear (sky)
+  z= 19 PASS-through first=ARCH_rotunda_archivolt_07                | ARCH_rotunda_archivolt_07@29.9m(ap +21.7, r 6.2)
+  z= 20 PASS-through first=ARCH_rotunda_wall_07                     | ARCH_rotunda_wall_07@29.2m(ap +20.6, r 6.2) | ARCH_rotunda_wall_07@30.6m(ap +21.5, r 7.3)
+  z= 21 PASS-soffit  first=ARCH_rotunda_vault_coffers_07            | ARCH_rotunda_vault_coffers_07@28.0m(ap +19.3, r 5.8) | ARCH_rotunda_vault_coffers_07@28.3m(ap +19.5, r 6.1) | ARCH_rotunda_wall_07@28.6m(ap +19.6, r 6.2)
+  z= 22 PASS-soffit  first=ARCH_rotunda_vault_07                    | ARCH_rotunda_vault_07@27.6m(ap +18.5, r 5.9) | ARCH_rotunda_wall_07@29.2m(ap +19.5, r 7.2) | ARCH_rotunda_wall_07@32.5m(ap +21.5, r 9.8)
+
+=== cam03 colonnade opening fan (rotunda outer wall ~58.6 m from the station)
+  dz= -6 dl=-2  ok        ARCH_colonnade_north_column_024_LOD1@153.0m z4.5 | ARCH_colonnade_north_column_024_LOD1@154.5m z4.5 | ARCH_colonnade_north_column_027_LOD1@159.4m z4.6
+  dz= -6 dl=+0  ok        ARCH_colonnade_north_column_026_LOD1@156.6m z4.6 | ARCH_colonnade_north_column_026_LOD1@157.7m z4.6 | ARCH_colonnade_north_column_026_LOD1@157.8m z4.6
+  dz= -6 dl=+2  ok        ENV_tree_cypress_45_LOD1@167.2m z4.8 | ARCH_colonnade_north_column_033_LOD1@168.3m z4.8 | ENV_tree_eucalyptus_31_LOD1@169.0m z4.8
+  dz= -3 dl=-2  ok        ARCH_colonnade_north_column_024_LOD1@153.3m z10.1 | ARCH_colonnade_north_column_024_LOD1@153.4m z10.1 | ARCH_colonnade_north_column_024_LOD1@154.6m z10.2
+  dz= -3 dl=+0  ok        ARCH_colonnade_north_column_026_LOD1@156.8m z10.3 | ARCH_colonnade_north_column_026_LOD1@157.8m z10.4 | ENV_tree_redwood_31_LOD1@164.4m z10.7
+  dz= -3 dl=+2  ok        ARCH_colonnade_north_column_033_LOD1@168.7m z11.0 | ENV_tree_eucalyptus_31_LOD1@169.1m z11.0 | ARCH_colonnade_north_column_033_LOD1@169.5m z11.0
+  dz= +0 dl=-2  ok        INST_maiden_017_LOD1@151.5m z15.5 | ARCH_colonnade_north_entablature_inner@152.0m z15.6 | INST_maiden_017_LOD1@152.3m z15.6
+  dz= +0 dl=+0  clear (sky)
+  dz= +0 dl=+2  ok        ARCH_colonnade_north_box_068.0_frame_3@164.1m z16.7 | ARCH_colonnade_north_box_068.0_wall_3@164.2m z16.7 | ARCH_colonnade_north_box_068.0_frame_3@164.2m z16.7
+  dz= +3 dl=-2  clear (sky)
+  dz= +3 dl=+0  clear (sky)
+  dz= +3 dl=+2  clear (sky)
+  dz= +6 dl=-2  clear (sky)
+  dz= +6 dl=+0  clear (sky)
+  dz= +6 dl=+2  clear (sky)
+  dz=+10 dl=-2  ok        ARCH_rotunda_inner_archivolt_06@98.2m z22.2 | ARCH_rotunda_inner_wall_06@98.3m z22.2 | ARCH_rotunda_inner_wall_06@99.5m z22.5
+  dz=+10 dl=+0  ok        ARCH_rotunda_inner_wall_06@99.1m z22.4 | ARCH_rotunda_inner_wall_06@99.5m z22.5 | ARCH_rotunda_vault_06@100.1m z22.6
+  dz=+10 dl=+2  ok        ARCH_rotunda_inner_archivolt_06@98.1m z22.2 | ARCH_rotunda_inner_wall_06@98.3m z22.2 | ARCH_rotunda_inner_wall_06@99.5m z22.5
+
+[qa_r27_rays] 95 rays, 0 fails
+[qa_r27_rays] PASS
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 29670 exited rc=0 after 2 s (max 600)

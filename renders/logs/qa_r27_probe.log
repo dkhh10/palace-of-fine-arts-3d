@@ -1,0 +1,40 @@
+st  MAE%range  moved%px  moved%8x8blk   extent of 8x8 moves (px)   luma ratio   blk-moved% by row-third (top/mid/bottom)
+01     4.645   44.49    42.64      x 0-1919, y 352-1079       0.9977    0.07 / 40.99 / 86.84
+02     3.011   21.74    22.49      x 0-1919, y 360-1079       0.9669    0.00 / 31.07 / 36.39
+03     0.390    5.75     6.01      x 32-1295, y 16-927        1.0061    6.12 /  8.87 /  3.05
+04     0.061    0.32     0.37      x 0-1919, y 0-1079         1.0021    0.31 /  0.00 /  0.81
+05     3.574   31.26    32.26      x 0-1919, y 424-1079       1.0044    0.00 / 19.31 / 77.48
+06     1.584   43.78    43.69      x 0-1919, y 0-1079         1.0058   20.26 / 38.51 / 72.30
+noise floor: cam01 p10 32 vs 64 spp MAE 1.311 %, moved px 36.99 %, 8x8 blk 5.39 %
+maps -> /private/tmp/claude-501/-Users-dk-Projects-3d-render-blender-3rd-attempt-building/00e8c6b9-41fb-47ed-ad73-5867d9f49faf/scratchpad/r27
+cam02 moved 22.49 %; columns with > 2 % moved: x 0-1903
+  x    0- 159: moved  6.15 %, rows 752-1063, lum  91.5 ->  93.9
+  x  160- 319: moved 17.44 %, rows 424-1079, lum 167.2 ->  64.7
+  x  320- 479: moved 20.52 %, rows 384-1079, lum 152.8 ->  73.1
+  x  480- 639: moved 44.00 %, rows 360-1079, lum  88.1 ->  45.6
+  x  640- 799: moved 29.52 %, rows 440-1079, lum  32.7 ->  43.9
+  x  800- 959: moved 36.56 %, rows 400-1079, lum  29.8 ->  32.1
+  x  960-1119: moved 39.26 %, rows 408-1079, lum  26.1 ->  33.6
+  x 1120-1279: moved 11.59 %, rows 448-1079, lum  31.3 ->  38.2
+  x 1280-1439: moved 20.89 %, rows 448-1079, lum  38.4 ->  47.2
+  x 1440-1599: moved 15.70 %, rows 704-1079, lum  53.6 ->  59.4
+  x 1600-1759: moved 10.30 %, rows 416-1079, lum  45.4 ->  53.3
+  x 1760-1919: moved 17.93 %, rows 416-927, lum  28.4 ->  42.1
+box              p9 lum/sat  ->  p10 lum/sat   max|d| moved%
+cam01 attic_sunlit  174.8/0.510 ->  174.9/0.510       4   0.00
+cam01 attic_shaded  157.2/0.492 ->  157.4/0.493       7   0.05
+cam01 entablature   168.7/0.529 ->  168.7/0.529       7   0.05
+cam01 drum          141.0/0.801 ->  141.3/0.801       4   0.00
+cam03 near shaft     29.0/0.818 ->   30.6/0.788     140  18.68
+cam03 rotunda        90.4/0.728 ->   93.1/0.703      86  19.27
+cam04 coffers        54.0/0.472 ->   54.1/0.473       6   0.00
+cam04 ring           37.6/0.589 ->   37.7/0.589       4   0.00
+cam05 rotunda       155.6/0.677 ->  156.9/0.668      55   6.33
+cam01 p9   n=    462 hue(red-band)  +13.8 sat 0.387 lum   50.8 R-B  +26.2 B/R 0.609 magenta share   2.8 %
+cam01 p10  n=    683 hue(red-band)   +9.0 sat 0.364 lum   61.9 R-B  +30.4 B/R 0.627 magenta share  17.9 %
+cam02 p9   n=  28076 hue(red-band)   +0.7 sat 0.382 lum   36.8 R-B  +18.6 B/R 0.630 magenta share  38.1 %
+cam02 p10  n=   5677 hue(red-band)   +2.9 sat 0.415 lum   64.6 R-B  +32.9 B/R 0.626 magenta share  36.1 %
+cam05 p9   n=    180 hue(red-band)  +15.4 sat 0.344 lum   41.1 R-B  +18.9 B/R 0.638 magenta share   0.6 %
+cam05 p10  n=    441 hue(red-band)  +15.6 sat 0.359 lum   54.9 R-B  +25.8 B/R 0.633 magenta share   0.2 %
+cam06 p9   n=   3797 hue(red-band)  +15.0 sat 0.315 lum   67.9 R-B  +26.7 B/R 0.683 magenta share   0.1 %
+cam06 p10  n=   4929 hue(red-band)  +14.5 sat 0.332 lum   74.5 R-B  +31.9 B/R 0.661 magenta share   1.0 %

@@ -1,0 +1,58 @@
+== water reflection box 900 760 1020 840: lum/hue/sat/R-B | texture
+  ref169          162.1/ 33.8/0.403/ +77.2 | acx3 0.80 acy3 0.09 Lx  7.93 Ly  1.12 aspect 7.05 aniso 2.36 cv 0.312 dark 16.2 %
+  p9_32           124.0/ 47.1/0.214/ +27.9 | acx3 0.86 acy3 0.16 Lx 12.39 Ly  0.91 aspect 13.58 aniso 7.58 cv 0.266 dark 10.4 %
+  p10_32          120.2/ 47.9/0.383/ +50.2 | acx3 0.77 acy3 0.12 Lx  6.72 Ly  1.04 aspect 6.47 aniso 1.96 cv 0.278 dark  6.4 %
+  p10_64          119.8/ 48.0/0.385/ +50.3 | acx3 0.75 acy3 0.12 Lx  6.44 Ly  1.06 aspect 6.08 aniso 1.94 cv 0.278 dark  6.2 %
+== open water (lum/hue/sat/R-B)
+  near_water_sky  ref169          103.6/187.4/0.229/ -25.5
+  near_water_sky  p9_32           124.8/204.7/0.184/ -25.4
+  near_water_sky  p10_32          118.7/195.9/0.193/ -24.8
+  near_water_sky  p10_64          119.0/195.5/0.191/ -24.6
+  ripples         ref169          103.1/177.9/0.143/ -14.7
+  ripples         p9_32           121.3/202.1/0.141/ -18.3
+  ripples         p10_32          117.7/186.9/0.135/ -16.5
+  ripples         p10_64          117.9/186.3/0.134/ -16.4
+  lagoon_flank    ref169          151.8/200.1/0.250/ -42.8
+  lagoon_flank    p9_32           162.5/209.3/0.230/ -42.8
+  lagoon_flank    p10_32          161.5/208.0/0.231/ -42.6
+  lagoon_flank    p10_64          161.5/207.9/0.229/ -42.3
+== stone hold boxes (lum/hue/sat/R-B)
+  attic_sunlit    ref169          189.5/ 40.0/0.590/+137.0
+  attic_sunlit    p9_32           187.3/ 36.9/0.514/+117.2
+  attic_sunlit    p10_32          187.5/ 36.9/0.513/+117.1
+  attic_sunlit    p10_64          187.4/ 36.9/0.513/+117.0
+  attic_shaded    ref169          120.0/ 30.4/0.449/ +66.7
+  attic_shaded    p9_32           120.3/ 41.3/0.688/+103.9
+  attic_shaded    p10_32          120.6/ 41.4/0.688/+104.1
+  attic_shaded    p10_64          120.3/ 41.3/0.689/+104.2
+  entablature     ref169          134.5/ 32.4/0.611/+108.7
+  entablature     p9_32           119.1/ 38.2/0.771/+123.5
+  entablature     p10_32          119.5/ 38.3/0.771/+123.8
+  entablature     p10_64          119.3/ 38.2/0.770/+123.4
+  vault field     ref169           45.4/  5.9/0.328/ +19.4
+  vault field     p9_32            59.9/ 39.4/0.680/ +51.9
+  vault field     p10_32           60.0/ 39.6/0.680/ +52.0
+  vault field     p10_64           60.1/ 39.5/0.681/ +52.1
+  jamb            ref169           95.4/ 22.3/0.469/ +59.2
+  jamb            p9_32            52.7/ 30.1/0.617/ +44.2
+  jamb            p10_32           57.8/ 27.2/0.512/ +38.8
+  jamb            p10_64           57.7/ 26.9/0.508/ +38.4
+  columns(mask)   ref169           96.8/ 24.8/0.585/ +79.5
+  columns(mask)   p9_32            73.8/ 28.9/0.702/ +75.2
+  columns(mask)   p10_32          103.2/ 28.7/0.616/ +87.6
+  columns(mask)   p10_64          103.8/ 28.6/0.616/ +88.2
+  shaft crop      ref169          112.3/ 33.8/0.599/ +87.4
+  shaft crop      p9_32           105.7/ 38.1/0.744/+104.6
+  shaft crop      p10_32          111.3/ 38.0/0.684/ +98.7
+  shaft crop      p10_64          111.3/ 37.9/0.683/ +98.6
+== foliage: conifer (box 1s non-sky) | willow leaf (box 2 leaf px) | box 2 dark/leaf % | box 1 dark/sky %
+  ref169         con RGB (114.3,109.3, 84.4) luma 107.9 B/G 0.77 | wil RGB (174.1,159.1, 84.9) luma 155.1 B/G 0.53 | box2 dark  8.9 leaf  7.1 | box1 dark 15.2 sky 34.8
+  p9_32          con RGB ( 63.0, 62.3, 53.2) luma  61.5 B/G 0.85 | wil RGB ( 57.4, 58.6, 11.0) luma  52.8 B/G 0.19 | box2 dark 28.4 leaf 10.9 | box1 dark 15.4 sky 58.7
+  p10_32         con RGB (115.9,105.3, 37.1) luma 100.7 B/G 0.35 | wil RGB ( 82.7, 80.1, 25.3) luma  74.6 B/G 0.32 | box2 dark 29.2 leaf 11.8 | box1 dark 17.3 sky 45.5
+  p10_64         con RGB (115.5,104.9, 36.8) luma 100.3 B/G 0.35 | wil RGB ( 83.8, 81.0, 26.3) luma  75.6 B/G 0.32 | box2 dark 29.3 leaf 11.6 | box1 dark 17.3 sky 45.6
+== cam05 lagoon box (448, 619, 960, 713) (1280x720): lum/hue/sat/R-B
+  p9              116.0/ 43.9/0.783/+114.5
+  p10             109.7/ 44.7/0.801/+110.3
+== cam06 lagoon box (60, 380, 340, 500) (1280x720): lum/hue/sat/R-B
+  p9              108.2/ 44.6/0.135/ +15.1
+  p10             107.6/ 54.7/0.203/ +22.4

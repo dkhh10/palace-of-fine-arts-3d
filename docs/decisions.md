@@ -1221,3 +1221,12 @@ hue 48 (max 45) still short, all four values closer to ref; near-water sat 0.191
 64 spp noise and ENV r2 already re-placed the willows on the photo's footprint, so the r1 densification stays (the revert clause in the ENV r1 entry is closed).
 Correction (review 71fd65e): near-water sat 0.191 is a pass -> fail regression on a box whose own ref value is 0.229; the 0.143 came from the ripples box, so
 the window's sat floor stands. Dark-gap share (6.3 % vs ref 16.2) moved away from ref, mostly from the water change itself. The lead viewed the sheet: reflection streaks, olive conifers and rose shafts all read closer to ref 169.
+
+## 2026-09-24 · PHASE 10 CLOSED (lead, Fable 5.1; QA 27 20e2b70: PHASE 10 GATE PASSED, hero 4.26, +0.21 over QA 26; stations 3.51 / 3.12 / 3.05 / 3.37 / 3.15)
+Closed on the gate per the stop rule (two rounds, one gate). What worked: the ENV silhouette (columnar cypresses, willows on the photo's footprint), the water's
+streaked reflection and the column tint, each measured on boxes against ref 169. What did not: the photo projection (registration failed held-out, shelved at weight 0
+with its infrastructure kept), the foliage's blue/green ratio (a shading problem, not albedo), the willow box (dark hedge). Residuals in docs/delivery.md "Phase 10"
+and docs/qa_round_27.md §5, owner-tagged. Nothing scheduled: the web viewer is NOT updated with Phase 10 (parity references stale, murk Cycles-only, leaf grade lost
+in export); a Phase 11 would be the web carry-over (export, viewer water, parity re-render) and, if the user visits the site, option C. Process: five review passes
+found four real problems (a flat registration metric, an unproven "byte-identical" hash claim, a mis-attributed hand-off, an unmeasured commit); early partial review
+of a long branch paid for itself. Two agents overran their caps (projection ~6.5 h of 5; materials ~41 min GPU of ~15): future briefs state the cap as a hard stop.

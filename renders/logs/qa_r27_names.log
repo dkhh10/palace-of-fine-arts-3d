@@ -1,0 +1,5 @@
+00:00.402  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/master.blend"
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+[qa_name_sweep] 520 exempt (on record in docs/quality_checklist.md), 0 to explain:
+[qa_name_sweep] PASS
+blender_run.sh: pid 29582 exited rc=0 after 3 s (max 300)
