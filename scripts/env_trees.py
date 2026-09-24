@@ -31,7 +31,7 @@ SPECIES = {
         downAngle=(90.0, 52.0, 42.0, 45.0), downAngleV=(0.0, -35.0, 15.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(20.0, 30.0, 40.0, 0.0), attractUp=(0.0, 0.8, 0.6, 0.0), segSplits=(0.0, 0.25, 0.1, 0.0),
         splitAngle=(0.0, 25.0, 20.0, 0.0), splitAngleV=(0.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.3,
-        scale=20.0, scaleV=2.0, leaves=230, leafScale=0.50, leafScaleX=0.38, leafScaleV=0.35, bend=0.3, leafangle=5.0,
+        scale=20.0, scaleV=2.0, leaves=230, leafScale=0.62, leafScaleX=0.38, leafScaleV=0.35, bend=0.3, leafangle=5.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=55.0, leafDownAngleV=25.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(15, 25)),
     # columnar Monterey cypress (younger / grouped trees): the narrow dark columns left of the rotunda in the user image
@@ -43,7 +43,7 @@ SPECIES = {
         downAngle=(90.0, 45.0, 42.0, 45.0), downAngleV=(0.0, -25.0, 15.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(20.0, 30.0, 40.0, 0.0), attractUp=(0.0, 1.0, 0.7, 0.0), segSplits=(0.0, 0.15, 0.1, 0.0),
         splitAngle=(0.0, 20.0, 20.0, 0.0), splitAngleV=(0.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.3,
-        scale=24.0, scaleV=2.0, leaves=230, leafScale=0.50, leafScaleX=0.38, leafScaleV=0.35, bend=0.3, leafangle=5.0,
+        scale=24.0, scaleV=2.0, leaves=230, leafScale=0.60, leafScaleX=0.38, leafScaleV=0.35, bend=0.3, leafangle=5.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=55.0, leafDownAngleV=25.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_cypress", leaf="MAT_leaf_cypress", height=(18, 28)),
     # tall straight trunk, high open crown, hanging foliage
@@ -67,19 +67,19 @@ SPECIES = {
         downAngle=(90.0, 55.0, 45.0, 45.0), downAngleV=(0.0, -30.0, 10.0, 10.0), rotate=(137.5, 137.5, 137.5, 137.5),
         rotateV=(25.0, 30.0, 40.0, 0.0), attractUp=(0.0, 0.5, 0.35, 0.0), segSplits=(0.1, 0.25, 0.1, 0.0),
         splitAngle=(25.0, 25.0, 20.0, 0.0), splitAngleV=(5.0, 8.0, 8.0, 0.0), splitByLen=True, splitHeight=0.3, baseSplits=1,
-        scale=21.0, scaleV=2.0, leaves=240, leafScale=0.48, leafScaleX=0.35, leafScaleV=0.35, bend=0.3, leafangle=0.0,
+        scale=21.0, scaleV=2.0, leaves=240, leafScale=0.60, leafScaleX=0.35, leafScaleV=0.35, bend=0.3, leafangle=0.0,
         leafShape="rect", horzLeaves=False, leafDownAngle=60.0, leafDownAngleV=25.0, leafRotate=137.5, leafRotateV=40.0,
         bark="MAT_bark_cypress", leaf=("MAT_leaf_pine", "MAT_leaf_cypress"), height=(15, 24)),
     # weeping willow at the water's edge
     "willow": dict(
-        levels=3, length=(0.75, 0.5, 1.4, 0.0), lengthV=(0.0, 0.1, 0.1, 0.0), branches=(0, 30, 14, 0),
+        levels=3, length=(0.75, 0.5, 1.4, 0.0), lengthV=(0.0, 0.1, 0.1, 0.0), branches=(0, 40, 14, 0),
         curveRes=(6, 8, 6, 1), curve=(0.0, 20.0, -40.0, 0.0), curveV=(120.0, 100.0, 0.0, 0.0), curveBack=(0.0, 20.0, 0.0, 0.0),
         shape="4", shapeS="4", branchDist=1.5, baseSize=0.2, baseSize_s=0.25, baseSplits=2,
         ratio=0.025, ratioPower=1.75, scale0=1.0, scaleV0=0.0, rootFlare=1.1,
         downAngle=(0.0, 20.0, 30.0, 20.0), downAngleV=(0.0, 20.0, 10.0, 10.0), rotate=(99.5, 137.5, -60.0, 140.0),
         rotateV=(15.0, 15.0, 45.0, 0.0), attractUp=(0.0, 0.0, -2.75, -3.0), segSplits=(0.1, 0.2, 0.2, 0.0),
         splitAngle=(12.0, 30.0, 16.0, 0.0), splitAngleV=(0.0, 10.0, 20.0, 0.0), splitByLen=True, handleType="1",
-        scale=11.0, scaleV=1.5, leaves=180, leafScale=0.45, leafScaleX=0.18, leafScaleV=0.35, bend=0.0, leafangle=-70.0,
+        scale=11.0, scaleV=1.5, leaves=300, leafScale=0.52, leafScaleX=0.22, leafScaleV=0.35, bend=0.0, leafangle=-70.0,
         leafShape="rect", leafDownAngle=30.0, leafDownAngleV=10.0, leafRotate=137.5, leafRotateV=30.0, horzLeaves=False, leafDist="10",
         bark="MAT_bark_cypress", leaf="MAT_leaf_broadleaf", height=(8, 12)),
     # coast redwood: narrow conical, flat horizontal sprays
@@ -436,6 +436,29 @@ PLAN = [
     ("eucalyptus", -88.0, -308.0, 30.0, "H"),
     ("cypress", -30.0, -290.0, 24.0, "H"),
 ]
+
+# ----------------------------------------------------------------------------- Phase 10 item 1: the NE mass
+# (species, x, y, height_m, note, crown-width factor).  Ref 169's conifer mass right of the rotunda has its crown-top
+# row at y 0.369 (398 px, median over frame x 0.655-0.740; scripts/env_p10_boxes.py).  The A cluster that was solved
+# for it stands 141-145 m down the view axis, where y 0.369 needs a crown top at z ~ 36 m - past every species window
+# (cypress 15-25, cypress_column 18-28 m) - and shadow_relief holds it at 21-26 m, so it tops out at y 0.41-0.45 and
+# the box read 97-99 % sky.  Leaf cards cannot fix a height.  Every ray through x 0.66-0.74 passes the rotunda at
+# 27-35 m, so the only dry land that projects there outside QA-02-13's podium ring is the peninsula shore at
+# d 64-73 m, where y 0.34-0.37 needs a crown of only 19-20 m (`scripts/env_p10_plan.py --search`).  Two columnar
+# Monterey cypresses (an existing prototype; the broad `cypress` fails the ring or the 3.5 m trunk spacing at every
+# passing coordinate) are solved there, left crown edge on the rotunda's right edge (0.66), right edge short of
+# QA-04-6's north-wing band (0.76).  The width factor scales the instance in X/Y only; `env_p10_plan` checks the ring
+# with max(CROWN_R, measured radius x factor) x height.
+# They are APPENDED after the hall belt (like the 8d belt) so no existing tree's seed, RNG draw, relief or position
+# changes; they are hand-placed composition ("A"), so none of the relief passes could have moved them anyway, and
+# `build_all` re-checks the three hard gates for them and prints the shadow cost.
+P10_ADD = [
+    ("cypress_column", -26.5, 32.6, 19.0, "A p10 NE mass, front column on the rotunda's right edge (ref 169 x 0.66-0.71)", 1.4),
+    ("cypress_column", -33.2, 24.6, 20.0, "A p10 NE mass, second column behind the peninsula bed (ref 169 x 0.69-0.76)", 1.8),
+]
+# Phase 10 item 2: extra X/Y crown scale per species (ref 169's willow left of the rotunda is ~13 m across at 8 m tall,
+# R/H ~ 0.8; the Sapling willow measures R/H 0.45-0.52).
+CROWN_XY = {"willow": 1.30}
 FAR_RADIUS = 130.0   # no QA camera within this distance -> LOD0/LOD1 objects use the LOD1/LOD2 mesh
 try:
     import qa_cameras as _qc
@@ -1254,6 +1277,30 @@ def land_snap(plan, lagoon_field, islet_fields, stage="", verbose=True):
 
 
 # ----------------------------------------------------------------------------- placement
+# measured Sapling crown radius / height (LOD0, renders/logs/p9_env_build6.log): the ring test for a widened crown
+P10_REAL_R = {"cypress": 0.385, "cypress_column": 0.11, "pine": 0.61, "willow": 0.49, "redwood": 0.30,
+              "broadleaf": 0.72, "eucalyptus": 0.54}
+
+
+def p10_shadow_report(before, after, colonnade_polys, lagoon_field, terrain_height):
+    """shadow_relief's four fractions (same samples, same sun) without and with the P10 additions."""
+    samples = L.wing_samples(colonnade_polys, heights=(6.0,) + SHADOW_BANDS)
+    band = [s for s in samples if s[3] >= min(SHADOW_BANDS)]
+    if lagoon_field is not None:
+        band = band + hero_water_samples(lagoon_field) + shore_sun_samples(lagoon_field, terrain_height)
+    out = []
+    for trees in (before, after):
+        per, _ = L.shadowed_fraction(band, [list(t) for t in trees])
+        frac = {}
+        for (wi, _z), (tot, sh) in per.items():
+            t, x = frac.get(wi, (0, 0))
+            frac[wi] = (t + tot, x + sh)
+        out.append({wi: 100.0 * v[1] / max(1, v[0]) for wi, v in frac.items()})
+    names = ("north wing", "south wing", "hero water", "hero shore")
+    print("[env_trees] p10 shadow cost (before -> after the P10_ADD columns): " + "  ".join(
+        f"{names[k]} {out[0].get(k, 0):.1f} -> {out[1].get(k, 0):.1f} %" for k in range(4)))
+
+
 def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colonnade_polys=None, hall_poly=None, hall_field=None):
     t0 = time.time()
     lib = generate_library(quick=quick)
@@ -1324,7 +1371,20 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
         # inputs, their RNG streams, and the placement loop's own draw order for trees 0..N-1 exactly as they
         # were.  Its own keep-outs (hall, podium ring, gallery walk, colonnade roofs) are inside `hall_belt`.
         plan = plan + hall_belt(hall_poly, hall_field, terrain_height, colonnade_polys)
+        # Phase 10 item 1, LAST: the two NE-mass columns (see P10_ADD).  Appended after everything so no existing
+        # tree changes; the three hard gates are re-checked here and a failure stops the build.
+        before = list(plan)
+        for (sp, x, y, h, note, w) in P10_ADD:
+            dry = lagoon_field is None or not (lagoon_field.signed(x, y) < 1.0
+                                               and not any(f.signed(x, y) < 0 for f in islet_fields))
+            off = L.gallery_offset(x, y)
+            ring = math.hypot(x, y) - max(L.CROWN_R.get(sp, 0.35), P10_REAL_R.get(sp, 0.35) * w) * h
+            assert dry and (off is None or off >= L.GALLERY_KEEPOUT) and ring >= 37.0, \
+                f"P10_ADD {sp} ({x}, {y}) fails a hard gate: dry {dry} gallery {off} ring {ring:.1f}"
+            plan.append((sp, x, y, h, note))
+        p10_shadow_report(before, plan, colonnade_polys, lagoon_field, terrain_height)
     rnd = random.Random(77)
+    widen = {note: w for (_sp, _x, _y, _h, note, w) in P10_ADD}
     counts = {}
     per_species_idx = {}
     belt_rows = []
@@ -1353,6 +1413,10 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
         rot = rnd.uniform(0, 2 * math.pi)
         sx = scale * rnd.uniform(0.82, 1.16)
         sy = scale * rnd.uniform(0.82, 1.16)
+        # Phase 10: extra X/Y crown width (per species, and per P10_ADD entry) - multiplies after the draws, so the
+        # RNG stream every other tree reads is unchanged.
+        xy = CROWN_XY.get(sp, 1.0) * widen.get(note, 1.0)
+        sx, sy = sx * xy, sy * xy
         sz = scale * rnd.uniform(0.94, 1.08)
         tilt_a = rnd.uniform(0, 2 * math.pi)
         tilt = math.radians(rnd.uniform(0.0, 4.5))       # wind lean: no two crowns share a silhouette
