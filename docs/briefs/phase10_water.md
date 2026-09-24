@@ -19,3 +19,10 @@ bluer mirror with fine uniform ripple and a saturated blue field. Two measured t
 Rebuild master in the worktree (scripts/lead_build.sh). ONE Cycles hero 1920x1080 64 spp (<= 900 s), ONE cam05 and ONE cam06 at 1280x720 32 spp (<= 600 s each).
 At most four water cases in one sweep, priced in a table as round 9 did. Sheet renders/qa_comparisons/mat_p10w_sheet.png: reflection and open-water 100 % crops
 before / after / ref 169, cam05 and cam06 at 960. Report < 20 lines with the hold table; commit after every successful script with the attribution line.
+
+## Added 2026-09-24 (lead): foliage colour hand-off from ENV round 1 (docs/briefs/phase10_env_report.md), same agent, same file
+Also own `MAT_leaf_*` / the conifer and willow leaf materials in assets/materials.blend (names in scripts/mat_build.py; ENV never edits them). Measured on the
+Cycles cam01 after-frame vs ref 169: conifer mass mean RGB (63,57,17) luma 51 vs ref (114,109,84) luma 98; willow leaf (57,57,11) luma 48 vs ref (174,159,85)
+luma 155; blue/green 0.19-0.30 vs 0.77. Target: leaf albedo about +1 stop, less saturated, more blue (olive-grey, not yellow-green), translucency kept; land the
+conifer box luma within +-15 of ref and B/G within +-0.15, without the crowns washing out at cam05 (QA 25/26 residual). Measure with scripts/env_p10_boxes.py on
+the rebuilt master (cam01 Cycles 32 spp is enough for these boxes; it doubles as the water hero if you render at 64 spp once). Add the two foliage rows to the sheet.
