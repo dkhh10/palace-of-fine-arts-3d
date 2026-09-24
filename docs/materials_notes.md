@@ -2089,3 +2089,40 @@ clamp, `Base Normal Z` 0.52, dielectric specular; `MAT_plaster_ceiling` and `...
   `VARIANTS` was overwritten per sweep, so the committed script reproduces none of them -- keep them as
   `SWEEPS = {...}` selected by `--sweep`; (6) `mat_r10_measure.py`'s `REF083` hard-codes the main-checkout path
   -- use `common.REFERENCE_DIR`.
+
+## Checkpoint 2026-09-24 (Phase 10 r1 projection engineer, stopped on the lead's order; brief docs/briefs/phase10_projection.md)
+
+Environment: `uv venv --python 3.12 .venv-p10` in the worktree (gitignored) with pycolmap numpy pillow scipy
+opencv-python-headless OpenEXR matplotlib. Work files (gitignored, regenerable) in `assets/textures/projection2/work/`.
+Nothing was saved to any .blend; assets/architecture.blend and assets/materials.blend are unchanged.
+
+- **Step 1 (registration) — DONE, probe model reused.** `scripts/mat_p10_sfm.py images` regenerates the 71 registered
+  1600 px images (0 size mismatches against the model's cameras); `... dump` writes work/sfm.npz (71 cams, 11,452
+  points, 58,085 observations). hloc NOT attempted (time-box not spent).
+- **Step 2 (alignment) — IN PROGRESS, not converged.** `scripts/mat_p10_align.py icp`. Verified facts:
+  (a) gravity must come from the cameras' RIGHT vectors (roll residual median 0.45 deg, max 3.06); the image-up vectors
+  lean back with the photographers' pitch (median 8.7 deg) and gave a 12.8 deg tilt;
+  (b) the rotunda axis in model space: RANSAC circle, r 1.322 units through 1329 of 5458 points at column-attic height;
+  (c) scale is ~16.75 m/unit from the grid search (15-19 plausible; the apex-height seed said 18.8);
+  (d) the inlier score CANNOT break the octagon's 45-deg symmetry even with the site + colonnade in the target
+  (per-sector best 1179-1206 of 5000, all within 2 %), and the 7-DOF ICP from the wrong sector lands at 15.63 m/unit
+  with cameras at az 217 — wrong (they must sit at az ~82, the lagoon).
+  **Resume:** force the sector: take the face-0 candidate (s 15.25-16.75, yaw 189, tz 1-2 -> cameras at az ~82) as the
+  ICP start instead of `res[0]`, then check camera z ~ +1 m and distance 50-190 m; if the ICP still drifts, add >= 6 hand
+  picks (column shaft axes at z 8.5 / 22.96 in ref_022, columns at az 9.05/19.93/53.97/65.01/99.05/109.84/144.04/154.90,
+  world xy from work/arch_samples.npz per-object means) as PnP / 3D-3D anchors. Then `mat_p10_align.py cameras` ->
+  assets/textures/projection2/cameras.json, and the >= 5-photo edge reprojection check (not written yet).
+  Dead ends: `seed169` (REF169_XF rays -> mesh) — only 26 ref-169 observations, residuals 0.4-16 m, useless.
+- **Step 3 (UVBake) — script written and dry-run clean, NOT saved.** `scripts/blender_run.sh 900 -- --background
+  assets/architecture.blend --python scripts/arch_uvbake.py -- --save` (39 s). Checks pass: 0 overlap texels in all 4
+  groups, layer order / flags / UVProj hash / vertex+face counts unchanged. **Blocking finding:** texel density is far
+  below target — lagoon-side 27 (attic) / 19 (entablature) / 36 (drum+columns) / 295 (arch) texels/m at 4096, atlas fill
+  9 / 2.8 / 40 / 15 %. Cause: thousands of tiny islands (dentils 2776, eggs 2304, modillions 872) whose pack margins
+  dominate, plus large invisible areas. Fix before saving: unwrap the ornament courses by a ring (azimuth x z)
+  projection per facing class, or give them their own atlas; drop the weight of never-seen faces further; re-check fill.
+  Also: the 16 columns share ONE mesh (and the 16 bases share 2), so they share one atlas region — the projection must
+  take the median over every visible column instance. `arch_build.py` must exec `arch_uvbake.py` as a post-step like
+  `arch_uvproj.py`, or any ARCH rebuild drops the layer (hand-off to ARCH via the lead).
+- **Steps 4-10 — not started.** Plan: rasterise position/normal atlases in numpy from `mat_p10_meshdump.py uvbake`
+  (exact, no material edits; the brief's Cycles bake is equivalent), depth per camera in one Blender run, projection +
+  delighting in numpy, integration as a post-step script on materials.blend (mat_build.py is not ours).
