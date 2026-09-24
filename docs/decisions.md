@@ -1165,3 +1165,13 @@ builders Opus (projection xhigh, ENV high), planning and review on Fable. Stop r
 the score, with residuals logged. Budget cap 30 weekly points. Option C (a site capture -> splat as ground truth and environment layer) waits for the
 user's answer on a visit. MPS verified on this Mac (torch 2.14, diffusers 0.40 under uv), so delighting runs locally. A Blender GUI (pid 5262, not
 --background) was running when the phase opened; unregistered pids are reported, never killed.
+
+## 2026-09-24 · Phase 10 ENV r1 merged with the willow densification kept (lead, Fable 5.1; review docs/reviews/phase10_env_r1_review.md MERGE WITH FIXES)
+Fix-now 1 and 2 done by the lead (logs committed ed16f4c; after-state census: front column bbox span 0.651-0.725 vs rotunda edge 0.655, an 8 px
+bounding-box overlap, the silhouette is narrower; QA 27's tile review decides). Fix-now 3, the willow: box 2 moved AWAY from ref 169 (Cycles dark
+28.4 -> 44.6 % vs ref 8.9) because our leaf is a stop too dark and over-saturated (luma 48 vs ref 155, B/G 0.19-0.30 vs 0.77) so every added leaf
+counts as "dark"; the photo's willow is dense AND bright. Decision: keep the geometry, fix the leaf colour in the round-2 materials pass
+(docs/briefs/phase10_water.md addendum), re-measure box 2 there; if box 2 is still worse than before after the colour fix, ENV reverts
+branches/leaves (one-line, keeps the 1.30 crown width). NE box: crown-top passes (411 vs 398 px), sky 45.8 % and dark 23.6 % fail (ref 34.8 / 15.2)
+for the same colour reason. cam02's new columns cover the rotunda's left base: no plan rule, QA 27 scores it. Export hand-off: impostor rebake and
+new EXPM_*_LOD1_thin rows (Phase 6 budget) when Phase 10 goes to the web.
