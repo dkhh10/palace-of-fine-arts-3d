@@ -1,4 +1,19 @@
-# Phase 10 ENV round 1 — report (in progress)
+# Phase 10 ENV round 1 — report (final, 2026-09-24)
+
+Files: scripts/env_trees.py (P10_ADD 2 cypress_column, leaf/crown params), assets/environment.blend, scripts/env_p10_{boxes,census,plan,preview,cycles,sheet}.py.
+Boxes (scripts/env_p10_boxes.py, cam01 1920x1080), dark / sky / crown-top px. Eevee: before -> after (front col 19 m) -> after2 (20 m); Cycles 32 spp: cycles_p9 -> after2.
+| box | ref 169 | Eevee before / after / after2 | Cycles before / after2 | pass |
+|---|---|---|---|---|
+| 1 NE mass | 15.2 / 34.8 / 398 | 20.4/57.7/474 · 30.2/45.3/422 · 31.8/43.4/407 | 15.4/58.7/479 · 23.6/45.8/411 | top yes (+9..13 px); sky NO (+8.6..11); dark NO (+8.4 Cycles) |
+| 1s sky side | 5.8 / 64.3 | 1.6/97.3 · 20.0/74.1 · 23.0/70.5 | 0.9/98.6 · 16.2/74.3 | not an acceptance box |
+| 2 willow (dark / leaf) | 8.9 / 7.1 | 53.7/3.1 · 63.2/2.2 · 63.2/2.2 | 28.4/10.9 · 44.6/8.8 | NO: box holds our shadowed rotunda base, the willow is not at ref's x .39-.47 |
+| 3 N wing bays sky | 11.4 | 32.5 · 28.2 · 27.7 | 33.3 · 28.8 | report only (plan rule 15-20 %) |
+Gates: env_r9_replan --verify 0 failures; env_p10_plan --check 0 failing; P10 shadow cost 0 on all 4 targets at 20 m; cam01 spans 0.659-0.712 / 0.698-0.756 (rotunda span rule held).
+Tris (placed): LOD0 15,444,910 -> 16,440,294 (+6.4 %), LOD1 5,298,928 -> 5,741,062 (+8.3 %), LOD2 833,874 -> 849,706 (+1.9 %; willow LOD2 skeleton + 2 trees; brief said keep LOD2 as is).
+Hand-off to materials (foliage, Cycles vs ref 169): conifer mass mean RGB (63,57,17) luma 51 vs ref (114,109,84) luma 98; willow-box leaf (57,57,11) luma 48 vs ref willow (174,159,85) luma 155. Leaves are ~1 stop dark and far too saturated (B/G 0.30 vs 0.77); raise leaf albedo value and blue, cut saturation. Box 1 dark excess is this colour, not geometry.
+Open: item 2 needs a willow plan move toward cam01 x .39-.47 (not a density lever); cam02 now shows the new columns at x 0.04-0.36 overlapping the rotunda's left base.
+Sheet: renders/qa_comparisons/env_p10_sheet.png. Last commit: see git log (phase10-env).
+
 
 ## Checkpoint 2026-09-24
 Branch `phase10-env`. environment.blend REBUILT with the p10 changes (renders/logs/p10env_env_build2.log, rc 0) and
