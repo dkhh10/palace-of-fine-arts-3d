@@ -357,9 +357,9 @@ PLAN = [
     # tall in the willow box (crown-top row 548 vs ref 604; box share 17.3 vs 21.7 %).  Ref's willow is a low, broad
     # weeping crown: x 690-850 px, crown top row 601-604, curtain to the water at row 703 - 5.1 m above the tree's
     # ground at d 58.6 m.  So this ONE instance is planted at 5.4 m (outside the species window 8-12 m, which stays
-    # as is for every other willow) and widened x1.4 in X/Y (P10R2_WIDEN) to keep the photo's width; moved 2.5 m
+    # as is for every other willow) and widened x1.7 in X/Y (P10R2_WIDEN: x1.4 rendered 126 px wide vs ref 159) to keep the photo's width; moved 2.5 m
     # north to put the trunk at frame x 0.401 (ref's centre 0.401).  Gates: env_p10r2_plan.py --check.
-    ("willow", 4.4, 43.4, 5.4, "P hero-shore willow, ref 169 x 0.36-0.44; p10r2 (6.9,43.4) h9 -> here h5.4 w1.4 (ref crown-top row 604)"),
+    ("willow", 4.4, 43.4, 5.4, "P hero-shore willow, ref 169 x 0.36-0.44; p10r2 (6.9,43.4) h9 -> here h5.4 w1.7 (ref crown-top row 604)"),
     ("willow", -2.6, 45.9, 8.5, "P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here, ships x 0.423-0.500"),
     ("willow", -12.0, 44.0, 9.0, "P hero-shore willow, ref 169 x 0.56-0.64; r9r LAND 45 -> 44, ships x 0.517-0.598"),
     # A2. strip between the north wing and the embayment (3-13 m wide per OSM, canopy overhangs both).
@@ -468,7 +468,7 @@ P10_ADD = [
 CROWN_XY = {"willow": 1.30}
 # Phase 10 round 2: per-instance extra X/Y crown scale for hand-placed PLAN entries, keyed by the full note (applied
 # like a P10_ADD width factor, after the RNG draws).  The ring gates read it (env_r9_replan --verify, env_p10r2_plan).
-P10R2_WIDEN = {"P hero-shore willow, ref 169 x 0.36-0.44; p10r2 (6.9,43.4) h9 -> here h5.4 w1.4 (ref crown-top row 604)": 1.4}
+P10R2_WIDEN = {"P hero-shore willow, ref 169 x 0.36-0.44; p10r2 (6.9,43.4) h9 -> here h5.4 w1.7 (ref crown-top row 604)": 1.7}
 FAR_RADIUS = 130.0   # no QA camera within this distance -> LOD0/LOD1 objects use the LOD1/LOD2 mesh
 try:
     import qa_cameras as _qc
