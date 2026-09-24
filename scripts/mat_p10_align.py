@@ -253,6 +253,12 @@ def cmd_cameras():
     d, _ = load()
     sim = json.load(open(WORK / "sim.json"))
     s, Rs, Ts = sim["s"], np.array(sim["R"]), np.array(sim["T"])
+    D = None
+    rp = WORK / "refine.json"
+    if rp.exists():
+        p = json.load(open(rp))["p"]
+        D = (math.exp(p[0]), Rot.from_rotvec(p[1:4]).as_matrix(), np.array(p[4:7]))
+    PC = json.load(open(WORK / "refine_cams.json")) if (WORK / "refine_cams.json").exists() else {}
     cams = []
     for k, name in enumerate(d["names"]):
         R, t = d["R"][k], d["t"][k]
@@ -260,8 +266,17 @@ def cmd_cameras():
         # xc = R Rs^T (X - Ts)/s + t  ;  metric camera coords = s xc = (R Rs^T) X + (s t - R Rs^T Ts)
         Rw = R @ Rs.T
         tw = s * t - Rw @ Ts
+        Kk = d["K"][k].copy()
+        if D is not None:                         # the chamfer world correction D (mat_p10_edges.py refine): the camera
+            tw = (Rw @ D[2] + tw) / D[0]          # that sees mesh point X where the old one saw D(X) = s R X + T
+            Rw = Rw @ D[1]
+        pc = PC.get(str(name))
+        if pc is not None:                        # per-camera rotation about its centre + focal scale
+            dR = Rot.from_rotvec(pc["rotvec"]).as_matrix()
+            Rw, tw = dR @ Rw, dR @ tw
+            Kk[0, 0] *= pc["fscale"]; Kk[1, 1] *= pc["fscale"]
         C = -Rw.T @ tw
-        cams.append(dict(file=str(name), K=d["K"][k].tolist(), k1=float(d["dist"][k]),
+        cams.append(dict(file=str(name), K=Kk.tolist(), k1=float(d["dist"][k]),
                          R=Rw.tolist(), t=tw.tolist(), centre=C.tolist(),
                          size=[int(d["wh"][k][0]), int(d["wh"][k][1])]))
     extra = {}
@@ -270,6 +285,8 @@ def cmd_cameras():
         extra = json.load(open(ep))
         for c in cams:
             c["residual_px"] = extra.get("per_image", {}).get(c["file"])
+    sim["world_correction_D"] = None if D is None else dict(s=D[0], R=D[1].tolist(), T=D[2].tolist())
+    sim["per_camera_refined"] = len(PC)
     json.dump(dict(note="world = master metres (origin rotunda floor centre, +Y lagoon, +Z up). Pinhole x = K (R X + t), "
                         "then COLMAP SIMPLE_RADIAL: x_n *= 1 + k1 r^2 on normalised coords. size = the registered image "
                         "size (the probe's 1600 px thumbnail of reference/photos/raw/<src>).",
