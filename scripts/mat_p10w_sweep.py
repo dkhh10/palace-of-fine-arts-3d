@@ -76,11 +76,24 @@ FOLIAGE3 = [
     ("h1", {CON: dict(sat=0.30, grade=(2.8, 3.4, 5.6), trb=0.9, spec=0.6, sheen=0.3), ("MAT_leaf_broadleaf",): BRO_1}),
     ("h2", {CON: dict(sat=0.30, grade=(3.2, 3.8, 6.4), trb=0.9, spec=0.6, sheen=0.3), ("MAT_leaf_broadleaf",): BRO_1}),
 ]
+# ---- sweep 4 (after reading sweep 3): the wave carries the pitch (steeper, larger facets keep contrast); leaves
+WATER4 = [
+    ("y1", dict(aniso=0.8, amp=3.5, wscale=1.4, fine=0.5, murk=(GR_A, GR_B), gain=0.7, far=0.21)),
+    ("y2", dict(aniso=0.8, amp=3.5, wscale=1.8, fine=0.5, murk=(GR_A, GR_B), gain=0.7)),
+]
+FOLIAGE4 = [
+    ("j1", {CON: dict(sat=0.20, grade=(2.6, 3.4, 7.0), trb=1.0, spec=0.8, sheen=0.3),
+            ("MAT_leaf_broadleaf",): dict(sat=0.40, grade=(3.2, 3.2, 4.4), trb=0.8, spec=0.5, sheen=0.3)}),
+    ("j2", {CON: dict(sat=0.15, grade=(2.4, 3.2, 7.5), trb=1.0, spec=1.0, rough=0.45, sheen=0.3),
+            ("MAT_leaf_broadleaf",): dict(sat=0.35, grade=(3.4, 3.4, 5.0), trb=0.9, spec=0.6, sheen=0.3)}),
+]
 SETN = args[args.index("--set") + 1] if "--set" in args else "1"
-SET2 = SETN in ("2", "3")
+SET2 = SETN in ("2", "3", "4")
+if SETN == "4":
+    WATER3, FOLIAGE3 = WATER4, FOLIAGE4
 if SETN == "2":
     COLUMN = COLUMN2
-if SETN == "3":
+if SETN in ("3", "4"):
     WATER2 = WATER3
     FOLIAGE2 = [(tag, c) for tag, c in FOLIAGE3]
 
