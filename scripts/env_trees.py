@@ -454,7 +454,7 @@ PLAN = [
 # `build_all` re-checks the three hard gates for them and prints the shadow cost.
 P10_ADD = [
     ("cypress_column", -26.5, 32.6, 19.0, "A p10 NE mass, front column on the rotunda's right edge (ref 169 x 0.66-0.71)", 1.4),
-    ("cypress_column", -33.2, 24.6, 20.0, "A p10 NE mass, second column behind the peninsula bed (ref 169 x 0.69-0.76)", 1.8),
+    ("cypress_column", -33.2, 24.6, 19.0, "A p10 NE mass, second column behind the peninsula bed (ref 169 x 0.69-0.76); 20 -> 19 m: at 20 m it shades 1 more north-wing band sample, 21.2 -> 22.5 % against SHADOW_TARGET 22 %", 1.8),
 ]
 # Phase 10 item 2: extra X/Y crown scale per species (ref 169's willow left of the rotunda is ~13 m across at 8 m tall,
 # R/H ~ 0.8; the Sapling willow measures R/H 0.45-0.52).
