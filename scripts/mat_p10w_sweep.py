@@ -87,10 +87,21 @@ FOLIAGE4 = [
     ("j2", {CON: dict(sat=0.15, grade=(2.4, 3.2, 7.5), trb=1.0, spec=1.0, rough=0.45, sheen=0.3),
             ("MAT_leaf_broadleaf",): dict(sat=0.35, grade=(3.4, 3.4, 5.0), trb=0.9, spec=0.6, sheen=0.3)}),
 ]
+# ---- sweep 5 (after the acceptance frame showed j1's conifers LAVENDER from above at cam06): j1's albedo was blue
+# (cypress 0.21 / 0.30 / 0.53 linear) -- the render's grey-blue has to come from the sky specular, not the albedo.
+# Albedo kept olive-grey (B < G, R < G); each case also renders cam05 and cam06 at 960x540 16 spp.
+FOLIAGE5 = [
+    ("m1", {CON: dict(sat=0.35, grade=(2.8, 3.2, 3.0), trb=0.8, spec=0.6, sheen=0.3),
+            ("MAT_leaf_broadleaf",): dict(sat=0.60, grade=(2.4, 2.4, 2.4), trb=0.6, spec=0.4, sheen=0.2)}),
+    ("m2", {CON: dict(sat=0.30, grade=(3.0, 3.5, 3.4), trb=0.9, spec=0.7, sheen=0.3),
+            ("MAT_leaf_broadleaf",): dict(sat=0.55, grade=(2.6, 2.6, 2.8), trb=0.7, spec=0.45, sheen=0.25)}),
+]
 SETN = args[args.index("--set") + 1] if "--set" in args else "1"
-SET2 = SETN in ("2", "3", "4")
+SET2 = SETN in ("2", "3", "4", "5")
 if SETN == "4":
     WATER3, FOLIAGE3 = WATER4, FOLIAGE4
+if SETN == "5":
+    WATER3, FOLIAGE3 = [], FOLIAGE5
 if SETN == "2":
     COLUMN = COLUMN2
 if SETN in ("3", "4"):
@@ -216,6 +227,11 @@ else:
                 bs.inputs["Roughness"].default_value = c.get("rough", ro0)
                 bs.inputs["Sheen Weight"].default_value = c.get("sheen", sh0)
             render(scene, f"p10w_sweep{TAG}_{tag}.png", str(c))
+            if SETN == "5":
+                for cam, nm in (("CAM_qa_05_", "cam05"), ("CAM_qa_06_", "cam06")):
+                    setup(scene, next(o.name for o in bpy.data.objects if o.name.startswith(cam)), 960, 540, 16)
+                    render(scene, f"p10w_sweep{TAG}_{tag}_{nm}.png")
+                setup(scene, HERO, 1920, 1080, 32, FOLIAGE_WIN)
     if "water" in parts and not SET2:
         w = local("MAT_water_lagoon")
         an, bd, mk, gn = (node(w, "WATER_ANISO_X"), node(w, "WATER_BUMP_DIST"), node(w, "WATER_MURK"),
