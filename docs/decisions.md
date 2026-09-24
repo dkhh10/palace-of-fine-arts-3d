@@ -1153,3 +1153,15 @@ billboard rule (closed, no viewer change); the aerial city blocks (R3 tiles, clo
 photo, the edge is the belt behind them); the review carries (closed or tabled by name in docs/reviews/phase9_*). Scores 4.01 / 3.30 / 2.83 / 2.88 / 3.28 / 3.07 ->
 4.05 / 3.55 / 3.08 / 3.05 / 3.24 / 3.15; mobile hero 3.40 -> 3.44. Two full re-bakes were priced and one run (87 jobs, 455 min); twelve reviewed merges. Open
 residuals with owners are in docs/delivery.md "Phase 9 / Known issues". Polish beyond this is a new phase; nothing is scheduled.
+
+## 2026-09-24 · PHASE 10 OPENED: photo-derived appearance on the existing mesh (user: "go ahead" on docs/approach_review_2026-09-24.md)
+The review's finding stands as the premise: the collection registers only the lagoon-facing half of the rotunda (71 views, ~57 deg, docs/recon_probe/),
+so photo-to-3D of the whole Palace is off the table; the remaining hero gap is appearance (uniform mottle, lost column rose, foliage mass, mirror water),
+not shape. Decided: Phase 10 = option A (registered multi-view photo projection + delighting onto UVBake atlases of the rotunda and columns, materials
+owner, ARCH routed for the one UV layer as with arch_uvproj.py in round 8) and option B1 (tree mass and willow to ref 169, ENV owner, environment.blend
+only, no materials edit) in round 1, concurrently on disjoint files; B2 (water: murk, streaked reflection) as a materials round 2 after A merges (never
+concurrent with A: same file); monocular ornament normals (A2) deferred until A's gain is measured. Lighting frozen (r19). Casting per the user:
+builders Opus (projection xhigh, ENV high), planning and review on Fable. Stop rule: two rounds and one QA gate; the phase closes on the gate whatever
+the score, with residuals logged. Budget cap 30 weekly points. Option C (a site capture -> splat as ground truth and environment layer) waits for the
+user's answer on a visit. MPS verified on this Mac (torch 2.14, diffusers 0.40 under uv), so delighting runs locally. A Blender GUI (pid 5262, not
+--background) was running when the phase opened; unregistered pids are reported, never killed.

@@ -121,3 +121,4 @@ docs/usage/turns_all.json
 .claude/
 .wrangler/
 renders/logs/*.jsonl
+docs/recon_probe/sparse/
