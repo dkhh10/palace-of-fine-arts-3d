@@ -1,0 +1,217 @@
+[
+ {
+  "id": "2",
+  "reg": 71,
+  "pts": 11452,
+  "track": 5.072039818372336,
+  "reproj": 0.42960215743695623,
+  "cats": {
+   "rotunda": 44,
+   "main": 27
+  },
+  "names": [
+   "ref_089_rotunda_Sf_exploratorium.jpg",
+   "ref_039_rotunda_Palace_of_Fine_Arts_Presidio_San_Francisco.jpg",
+   "ref_177_main_Palace_of_Fine_Arts_March_2018_1480.jpg",
+   "ref_033_rotunda_Palace_of_Fine_Arts_Sa_Francisco_July16.jpg",
+   "ref_099_main_2016_09_25_Palace_of_Fine_Arts_and_fountain_San_Fr.jpg",
+   "ref_141_main_Heritage_Art_Museum_in_California.jpg",
+   "ref_025_rotunda_Palace_of_Fine_Arts_09.jpg",
+   "ref_149_main_Marina_District_San_Francisco_CA_USA_panoramio_12.jpg",
+   "ref_016_rotunda_Palace_of_Fine_Arts_March_2018_1529.jpg",
+   "ref_151_main_Marina_District_San_Francisco_CA_USA_panoramio_3.jpg",
+   "ref_164_main_PALACE_OF_FINE_ARTS.jpg",
+   "ref_011_rotunda_Palace_of_Fine_Arts_March_2018_1460.jpg",
+   "ref_090_rotunda_The_Palace_of_Fine_Arts_San_Francisco_2013.jpg",
+   "ref_009_rotunda_Palace_of_Fine_Arts_San_Francisco.jpg",
+   "ref_014_rotunda_Palace_of_Fine_Arts_March_2018_1486.jpg",
+   "ref_144_main_Lagoon_Palace_of_Fine_Arts_San_Francisco_CA_DSC024.jpg",
+   "ref_158_main_Marina_District_San_Francisco_CA_USA_panoramio.jpg",
+   "ref_062_rotunda_Palace_of_Fine_Arts_View_of_Rotunda_from_north_eas.jpg",
+   "ref_066_rotunda_Palace_of_fine_arts_20180504.jpg",
+   "ref_027_rotunda_Palace_of_Fine_Arts_2012_04.jpg",
+   "ref_135_main_Fountain_322090800.jpg",
+   "ref_169_main_Palace_of_Fine_Arts_16794p.jpg",
+   "ref_086_rotunda_San_Francisco_Palace_Of_Fine_Art.jpg",
+   "ref_023_rotunda_Palace_of_Fine_Arts_03.jpg",
+   "ref_072_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg",
+   "ref_063_rotunda_Palace_of_Fine_Arts_View_of_Rotunda_from_south_eas.jpg",
+   "ref_058_rotunda_Palace_of_Fine_Arts_30.jpg",
+   "ref_148_main_Marina_District_San_Francisco_CA_USA_panoramio_10.jpg",
+   "ref_152_main_Marina_District_San_Francisco_CA_USA_panoramio_4.jpg",
+   "ref_070_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg",
+   "ref_078_rotunda_San_Francisco_34615450294.jpg",
+   "ref_015_rotunda_Palace_of_Fine_Arts_March_2018_1488.jpg",
+   "ref_012_rotunda_Palace_of_Fine_Arts_March_2018_1470.jpg",
+   "ref_176_main_Palace_of_Fine_Arts_March_2018_1476.jpg",
+   "ref_139_main_Gushing_lagoon_Palace_of_Fine_Arts_San_Francisco_4.jpg",
+   "ref_170_main_Palace_of_Fine_Arts_322090718.jpg",
+   "ref_098_main_2016_09_25_Palace_of_Fine_Arts_San_Francisco_NRHP.jpg",
+   "ref_024_rotunda_Palace_of_Fine_Arts_08.jpg",
+   "ref_145_main_Lagoon_Palace_of_Fine_Arts_San_Francisco_CA_DSC024.jpg",
+   "ref_034_rotunda_Palace_of_Fine_Arts_San_Francisco_December_2021.jpg",
+   "ref_067_rotunda_Palacio_de_Finas_Artes_San_Francisco.jpg",
+   "ref_091_rotunda_The_Palace_of_Fine_Arts_and_its_lagoon_in_San_Fran.jpg",
+   "ref_133_main_Exploratorium_dyeclan_com_panoramio.jpg",
+   "ref_060_rotunda_Palace_of_Fine_Arts_33.jpg",
+   "ref_071_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg",
+   "ref_085_rotunda_San_Francisco_CA_USA_Palace_of_Fine_Arts_2022_0921.jpg",
+   "ref_035_rotunda_Palace_of_Fine_Arts_Theatre_in_San_Francisco.jpg",
+   "ref_154_main_Marina_District_San_Francisco_CA_USA_panoramio_6.jpg",
+   "ref_013_rotunda_Palace_of_Fine_Arts_March_2018_1484.jpg",
+   "ref_087_rotunda_San_Francisco_Palace_of_Fine_Arts_with_Trees_01.jpg",
+   "ref_079_rotunda_San_Francisco_34647319243.jpg",
+   "ref_021_rotunda_Palace_of_Fine_Arts_panoramio_2.jpg",
+   "ref_057_rotunda_Palace_of_Fine_Arts_29.jpg",
+   "ref_150_main_Marina_District_San_Francisco_CA_USA_panoramio_2.jpg",
+   "ref_161_main_Maybeck_Fine_Arts_Palace_3.jpg",
+   "ref_171_main_Palace_of_Fine_Arts_9331688296.jpg",
+   "ref_175_main_Palace_of_Fine_Arts_March_2018_1468.jpg",
+   "ref_041_rotunda_Palace_of_Fine_Arts_San_Francisco_16669848394.jpg",
+   "ref_017_rotunda_Palace_of_Fine_Arts_March_2018_1539.jpg",
+   "ref_064_rotunda_Palace_of_fine_arts_2006.jpg",
+   "ref_093_rotunda_The_rotunda_of_the_Palace_of_Fine_Arts_San_Francis.jpg",
+   "ref_065_rotunda_Palace_of_fine_arts_in_San_Francisco.jpg",
+   "ref_156_main_Marina_District_San_Francisco_CA_USA_panoramio_8.jpg",
+   "ref_022_rotunda_Palace_of_Fine_Arts_02.jpg",
+   "ref_174_main_Palace_of_Fine_Arts_March_2018_1464.jpg",
+   "ref_140_main_Gushing_lagoon_Palace_of_Fine_Arts_San_Francisco.jpg",
+   "ref_018_rotunda_Palace_of_Fine_Arts_March_2018_1545.jpg",
+   "ref_095_rotunda_US_CA_San_Francisco_North_America_The_West_4889277.jpg",
+   "ref_128_main_Corinthian_columns_and_rotunda_Palace_of_Fine_Arts.jpg",
+   "ref_088_rotunda_San_Francisco_California3920.jpg",
+   "ref_059_rotunda_Palace_of_Fine_Arts_31.jpg"
+  ]
+ },
+ {
+  "id": "3",
+  "reg": 19,
+  "pts": 2071,
+  "track": 3.5987445678416226,
+  "reproj": 0.7332794731498616,
+  "cats": {
+   "rotunda": 17,
+   "main": 2
+  },
+  "names": [
+   "ref_083_rotunda_San_Francisco_40326830584.jpg",
+   "ref_082_rotunda_San_Francisco_39226297330.jpg",
+   "ref_073_rotunda_Rotunda_dome_interior_San_Francisco_CA_USA_9479192.jpg",
+   "ref_081_rotunda_San_Francisco_38307141151.jpg",
+   "ref_020_rotunda_Palace_of_Fine_Arts_March_2018_1610.jpg",
+   "ref_094_rotunda_Tomb_interior_ceiling_of_Palace_of_Fine_Arts.jpg",
+   "ref_185_main_Palace_of_Fine_Arts_March_2018_1566.jpg",
+   "ref_107_main_Angel_Palace_of_Fine_Arts_San_Francisco_CA_DSC0247.jpg",
+   "ref_084_rotunda_San_Francisco_40998310452.jpg",
+   "ref_040_rotunda_Palace_of_Fine_Arts_SF_CA.jpg",
+   "ref_003_rotunda_Cupola_Palace_of_Fine_Arts_San_Francisco_2013.jpg",
+   "ref_019_rotunda_Palace_of_Fine_Arts_March_2018_1558.jpg",
+   "ref_068_rotunda_Partial_view_of_the_dome_from_below_Palace_of_Fine.jpg",
+   "ref_026_rotunda_Palace_of_Fine_Arts_10.jpg",
+   "ref_001_rotunda_Bottom_view_Palace_of_Fine_Arts_San_Francisco_2013.jpg",
+   "ref_077_rotunda_San_Francisco_24415143298.jpg",
+   "ref_004_rotunda_Heritage_Art_museum.jpg",
+   "ref_080_rotunda_San_Francisco_35290378482.jpg",
+   "ref_075_rotunda_Rotunda_Ceiling.jpg"
+  ]
+ },
+ {
+  "id": "1",
+  "reg": 11,
+  "pts": 432,
+  "track": 4.844907407407407,
+  "reproj": 0.4304042382790912,
+  "cats": {
+   "rotunda": 11
+  },
+  "names": [
+   "ref_045_rotunda_Palace_of_Fine_Arts_12.jpg",
+   "ref_053_rotunda_Palace_of_Fine_Arts_20.jpg",
+   "ref_044_rotunda_Palace_of_Fine_Arts_11.jpg",
+   "ref_046_rotunda_Palace_of_Fine_Arts_13.jpg",
+   "ref_049_rotunda_Palace_of_Fine_Arts_16.jpg",
+   "ref_050_rotunda_Palace_of_Fine_Arts_17.jpg",
+   "ref_047_rotunda_Palace_of_Fine_Arts_14.jpg",
+   "ref_048_rotunda_Palace_of_Fine_Arts_15.jpg",
+   "ref_051_rotunda_Palace_of_Fine_Arts_18.jpg",
+   "ref_052_rotunda_Palace_of_Fine_Arts_19.jpg",
+   "ref_043_rotunda_Palace_of_Fine_Arts_10.jpg"
+  ]
+ },
+ {
+  "id": "6",
+  "reg": 4,
+  "pts": 150,
+  "track": 2.46,
+  "reproj": 0.45145197487626487,
+  "cats": {
+   "main": 4
+  },
+  "names": [
+   "ref_153_main_Marina_District_San_Francisco_CA_USA_panoramio_5.jpg",
+   "ref_142_main_Heritage_pillars.jpg",
+   "ref_159_main_Maybeck_Fine_Arts_Palace_1.jpg",
+   "ref_187_main_Palace_of_Fine_Arts_March_2018_1593.jpg"
+  ]
+ },
+ {
+  "id": "4",
+  "reg": 3,
+  "pts": 67,
+  "track": 2.7611940298507465,
+  "reproj": 0.2915744962810899,
+  "cats": {
+   "rotunda": 3
+  },
+  "names": [
+   "ref_076_rotunda_SF_Palace_of_Fine_Arts_Dome.jpg",
+   "ref_038_rotunda_Palace_of_Fine_Arts_during_Schon_Holt_Salahi_weddi.jpg",
+   "ref_036_rotunda_Palace_of_Fine_Arts_at_Dusk.jpg"
+  ]
+ },
+ {
+  "id": "5",
+  "reg": 3,
+  "pts": 38,
+  "track": 2.8684210526315788,
+  "reproj": 0.23920162539570197,
+  "cats": {
+   "main": 3
+  },
+  "names": [
+   "ref_130_main_Exploratorium_dyeclan_com_panoramio_1.jpg",
+   "ref_132_main_Exploratorium_dyeclan_com_panoramio_3.jpg",
+   "ref_180_main_Palace_of_Fine_Arts_March_2018_1493.jpg"
+  ]
+ },
+ {
+  "id": "7",
+  "reg": 3,
+  "pts": 1615,
+  "track": 3.0068111455108357,
+  "reproj": 0.2103995416880061,
+  "cats": {
+   "main": 3
+  },
+  "names": [
+   "ref_102_main_Aerial_view_from_Palace_of_Fine_Arts_San_Francisco.jpg",
+   "ref_104_main_Aerial_view_of_San_Francisco_California_with_the_P.jpg",
+   "ref_103_main_Aerial_view_of_San_Francisco_California_with_the_P.jpg"
+  ]
+ },
+ {
+  "id": "0",
+  "reg": 2,
+  "pts": 35,
+  "track": 2.0,
+  "reproj": 0.3318920704310961,
+  "cats": {
+   "main": 1,
+   "rotunda": 1
+  },
+  "names": [
+   "ref_177_main_Palace_of_Fine_Arts_March_2018_1480.jpg",
+   "ref_085_rotunda_San_Francisco_CA_USA_Palace_of_Fine_Arts_2022_0921.jpg"
+  ]
+ }
+]
