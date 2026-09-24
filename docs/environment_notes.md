@@ -149,8 +149,8 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 11 | broadleaf | 26 | 32 | 7 | P peninsula bed, left of the rotunda (cam01 x 0.21-0.26) |
 | 12 | willow | 18 | 40 | 7 | P low willow at the water, left (cam01 x 0.24-0.30) |
 | 13 | broadleaf | 35 | 20 | 6 | P peninsula bed, ships x 0.245-0.277; r9 QA-02-13 ring, r9r +0.5 m out so the ring is cleared, not touched |
-| 14 | willow | 7 | 43 | 9 | P hero-shore willow, ref 169 x 0.33-0.42; r9r LAND (9.0,45.5) -> here, ships x 0.340-0.417 |
-| 15 | willow | -3 | 46 | 7 | P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here, ships x 0.423-0.500 |
+| 14 | willow | 4 | 43 | 5 | P hero-shore willow, ref 169 x 0.36-0.44; p10r2 (6.9,43.4) h9 -> here h5.4 w1.7 (ref crown-top row 604) |
+| 15 | willow | -3 | 46 | 4 | P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here; p10r2 8.5 -> 4.0 m (central arch opening 2,065 -> 0 px) |
 | 16 | willow | -12 | 44 | 8 | P hero-shore willow, ref 169 x 0.56-0.64; r9r LAND 45 -> 44, ships x 0.517-0.598 |
 | 17 | cypress_column | -38 | -20 | 22 | A2 tall column right of the rotunda (user image x~1020); r9 QA-02-13 ring, r9r LAND+ring, ships x 0.668-0.719 |
 | 18 | pine | -60 | -31 | 13 | A2 strip along the north wing, r+8 (ref 169: crown over the cornice, x 0.79) |
@@ -307,6 +307,7 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 169 | cypress | -92 | -6 | 14 | HB hall east-face belt (8d r2) |
 | 170 | cypress_column | -26 | 33 | 20 | A p10 NE mass, front column on the rotunda's right edge (ref 169 x 0.66-0.71); 19 -> 20 m after the first after-render (crown top 422 px vs ref 398) |
 | 171 | cypress_column | -33 | 25 | 19 | A p10 NE mass, second column behind the peninsula bed (ref 169 x 0.69-0.76); 20 -> 19 m: at 20 m it shades 1 more north-wing band sample, 21.2 -> 22.5 % against SHADOW_TARGET 22 % |
+| 172 | willow | 8 | 43 | 9 | P p10r2 pale crown left of the hero-shore willow (ref 169 x 0.33-0.40, crown-top row 535) |
 <!-- PLAN_TABLE_END -->
 
 ## Polish round 1 (QA round 02 defects) — 2026-09-07

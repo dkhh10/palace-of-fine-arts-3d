@@ -1,0 +1,134 @@
+{
+ "tag": "w2",
+ "samples": 8,
+ "targets": {
+  "target": {
+   "name": "ENV_tree_willow_03_LOD0",
+   "note": "P hero-shore willow, ref 169 x 0.36-0.44; p10r2 (6.9,43.4) h9 -> here h5.4 w1.7 (ref crown-top row 604)",
+   "height_m": 5.4,
+   "location": [
+    4.400000095367432,
+    43.400001525878906,
+    -0.7862942218780518
+   ],
+   "scale": [
+    0.9272176027297974,
+    1.2373522520065308,
+    0.4718320965766907
+   ],
+   "bbox_z": [
+    -2.7963666915893555,
+    10.939849853515625
+   ]
+  },
+  "other": {
+   "name": "ENV_tree_willow_04_LOD0",
+   "note": "P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here; p10r2 8.5 -> 4.0 m (central arch opening 2,065 -> 0 px)",
+   "height_m": 4.0,
+   "location": [
+    -2.5999999046325684,
+    45.900001525878906,
+    -0.8014360070228577
+   ],
+   "scale": [
+    0.3762141168117523,
+    0.39480823278427124,
+    0.35019323229789734
+   ],
+   "bbox_z": [
+    -0.7601627707481384,
+    11.971333503723145
+   ]
+  },
+  "standin": {
+   "name": "ENV_tree_willow_10_LOD0",
+   "note": "P p10r2 pale crown left of the hero-shore willow (ref 169 x 0.33-0.40, crown-top row 535)",
+   "height_m": 9.0,
+   "location": [
+    7.900000095367432,
+    42.599998474121094,
+    -0.7888774275779724
+   ],
+   "scale": [
+    0.9901888966560364,
+    1.0295106172561646,
+    0.7912212610244751
+   ],
+   "bbox_z": [
+    -2.7963666915893555,
+    10.939849853515625
+   ]
+  }
+ },
+ "silhouette": {
+  "target": {
+   "own_px": 9947,
+   "rotunda_prism_px": 9214,
+   "aperture_px": 832,
+   "column_in_front_px": 387,
+   "in_wall_plane_px": 78,
+   "opening_any_face_px": 367,
+   "hero_arch_opening_px": 0,
+   "side_arch_opening_px": 367,
+   "see_through_px": 0,
+   "drum_px": 0,
+   "side_rows": [
+    605,
+    618
+   ],
+   "hero_arch_rows": null,
+   "hero_arch_cols": null,
+   "opening_rows": [
+    605,
+    618
+   ],
+   "opening_cols": [
+    742,
+    803
+   ]
+  },
+  "other": {
+   "own_px": 3324,
+   "rotunda_prism_px": 3318,
+   "aperture_px": 0,
+   "column_in_front_px": 0,
+   "in_wall_plane_px": 0,
+   "opening_any_face_px": 0,
+   "hero_arch_opening_px": 0,
+   "side_arch_opening_px": 0,
+   "see_through_px": 0,
+   "drum_px": 0,
+   "side_rows": null,
+   "hero_arch_rows": null,
+   "hero_arch_cols": null,
+   "opening_rows": null,
+   "opening_cols": null
+  },
+  "standin": {
+   "own_px": 16021,
+   "rotunda_prism_px": 8248,
+   "aperture_px": 3501,
+   "column_in_front_px": 273,
+   "in_wall_plane_px": 685,
+   "opening_any_face_px": 2543,
+   "hero_arch_opening_px": 0,
+   "side_arch_opening_px": 2543,
+   "see_through_px": 0,
+   "drum_px": 0,
+   "side_rows": [
+    538,
+    618
+   ],
+   "hero_arch_rows": null,
+   "hero_arch_cols": null,
+   "opening_rows": [
+    538,
+    618
+   ],
+   "opening_cols": [
+    742,
+    787
+   ]
+  }
+ }
+}

@@ -352,8 +352,19 @@ PLAN = [
     # transform, its two big weeping crowns sit at cam 01 x 0.33-0.47 and x 0.56-0.73 - world X -4..14 / -24..-8 at
     # Y 43-48 - and they hang from ~7 m down to the water, hiding the podium base between the pier groups.  Nine
     # metres, not seven: in the photo they reach the top of the QA crop.  Group P, so they are pinned.
-    ("willow", 6.9, 43.4, 9.0, "P hero-shore willow, ref 169 x 0.33-0.42; r9r LAND (9.0,45.5) -> here, ships x 0.340-0.417"),
-    ("willow", -2.6, 45.9, 8.5, "P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here, ships x 0.423-0.500"),
+    # Phase 10 round 2 (scripts/env_p10r2_*.py): measured on the tree's OWN pixels (Cycles holdout alpha) against ref
+    # 169's hand-segmented willow, the round-1 tree at (6.9, 43.4) h9 stood left of the photo's willow and 56 px too
+    # tall in the willow box (crown-top row 548 vs ref 604; box share 17.3 vs 21.7 %).  Ref's willow is a low, broad
+    # weeping crown: x 690-850 px, crown top row 601-604, curtain to the water at row 703 - 5.1 m above the tree's
+    # ground at d 58.6 m.  So this ONE instance is planted at 5.4 m (outside the species window 8-12 m, which stays
+    # as is for every other willow) and widened x1.7 in X/Y (P10R2_WIDEN: x1.4 rendered 126 px wide vs ref 159) to keep the photo's width; moved 2.5 m
+    # north to put the trunk at frame x 0.401 (ref's centre 0.401).  Gates: env_p10r2_plan.py --check.
+    ("willow", 4.4, 43.4, 5.4, "P hero-shore willow, ref 169 x 0.36-0.44; p10r2 (6.9,43.4) h9 -> here h5.4 w1.7 (ref crown-top row 604)"),
+    # Phase 10 r2 (lead item): at 8.5 m (relief 7 m) this crown covered 2,065 px of the central arch opening (rows
+    # 561-614), where ref 169 shows the urn and pedestal.  The opening's sill (PODIUM_TOP_Z 4.3 m on the lagoon face)
+    # projects to row ~614; from this trunk (d 55 m) a crown top below it must stay under z ~3.4 m, so this ONE
+    # instance is planted at 4.0 m, a low curtain at the water (same spot, species window unchanged for the rest).
+    ("willow", -2.6, 45.9, 4.0, "P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here; p10r2 8.5 -> 4.0 m (central arch opening 2,065 -> 0 px)"),
     ("willow", -12.0, 44.0, 9.0, "P hero-shore willow, ref 169 x 0.56-0.64; r9r LAND 45 -> 44, ships x 0.517-0.598"),
     # A2. strip between the north wing and the embayment (3-13 m wide per OSM, canopy overhangs both).
     #   ROUND 8, re-derived from ref 169 through the cam-01 projection (scripts/env_r8_fit.py --solve).  The three
@@ -459,6 +470,17 @@ P10_ADD = [
 # Phase 10 item 2: extra X/Y crown scale per species (ref 169's willow left of the rotunda is ~13 m across at 8 m tall,
 # R/H ~ 0.8; the Sapling willow measures R/H 0.45-0.52).
 CROWN_XY = {"willow": 1.30}
+# Phase 10 round 2: per-instance extra X/Y crown scale for hand-placed PLAN entries, keyed by the full note (applied
+# like a P10_ADD width factor, after the RNG draws).  The ring gates read it (env_r9_replan --verify, env_p10r2_plan).
+# Phase 10 round 2: moving the hero-shore willow onto ref 169's willow (above) bared the podium and stair at cam-01
+# x 0.33-0.37, rows 540-690, where ref 169 has a second, taller pale crown with fine pendulous foliage (x 0.33-0.40,
+# crown-top row 535) - the slot the round-1 9 m willow had been filling (x 0.336-0.417, top row 538).  One more
+# instance of the existing willow prototype (no new prototype), appended like P10_ADD so no existing tree's seed,
+# RNG draw or position changes, at the nearest dry coordinate 3.5 m from the moved willow (env_p10r2_plan --add).
+P10R2_ADD = [
+    ("willow", 7.9, 42.6, 9.0, "P p10r2 pale crown left of the hero-shore willow (ref 169 x 0.33-0.40, crown-top row 535)", 1.0),
+]
+P10R2_WIDEN = {"P hero-shore willow, ref 169 x 0.36-0.44; p10r2 (6.9,43.4) h9 -> here h5.4 w1.7 (ref crown-top row 604)": 1.7}
 FAR_RADIUS = 130.0   # no QA camera within this distance -> LOD0/LOD1 objects use the LOD1/LOD2 mesh
 try:
     import qa_cameras as _qc
@@ -1382,9 +1404,22 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
             assert dry and (off is None or off >= L.GALLERY_KEEPOUT) and ring >= 37.0, \
                 f"P10_ADD {sp} ({x}, {y}) fails a hard gate: dry {dry} gallery {off} ring {ring:.1f}"
             plan.append((sp, x, y, h, note))
+        # Phase 10 round 2, LAST: the crown ref 169 has left of the hero-shore willow (see P10R2_ADD).  Same rule
+        # as P10_ADD (appended, nothing before it changes), and the gates ring the WIDENED crown (CROWN_XY x w)
+        # and keep 3.5 m from every trunk already in the plan.
+        for (sp, x, y, h, note, w) in P10R2_ADD:
+            dry = lagoon_field is None or not (lagoon_field.signed(x, y) < 1.0
+                                               and not any(f.signed(x, y) < 0 for f in islet_fields))
+            off = L.gallery_offset(x, y)
+            ring = math.hypot(x, y) - max(L.CROWN_R.get(sp, 0.35), P10_REAL_R.get(sp, 0.35) * CROWN_XY.get(sp, 1.0) * w) * h
+            space = min(math.hypot(x - e[1], y - e[2]) for e in plan)
+            assert dry and (off is None or off >= L.GALLERY_KEEPOUT) and ring >= 37.0 and space >= 3.5, \
+                f"P10R2_ADD {sp} ({x}, {y}) fails a hard gate: dry {dry} gallery {off} ring {ring:.1f} space {space:.1f}"
+            plan.append((sp, x, y, h, note))
         p10_shadow_report(before, plan, colonnade_polys, lagoon_field, terrain_height)
     rnd = random.Random(77)
-    widen = {note: w for (_sp, _x, _y, _h, note, w) in P10_ADD}
+    widen = {note: w for (_sp, _x, _y, _h, note, w) in P10_ADD + P10R2_ADD}
+    widen.update(P10R2_WIDEN)
     counts = {}
     per_species_idx = {}
     belt_rows = []

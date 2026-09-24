@@ -1,0 +1,17 @@
+00:00.382  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env2/master.blend"
+00:17.089  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env2/renders/previews/environment/p10r2_after1_mask_target.png'
+00:29.062  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env2/renders/previews/environment/p10r2_after1_mask_other.png'
+[common] set_lod viewport=LOD1 render=LOD0: 6574 objects, 6 collections
+[p10r2_mask] target: ENV_tree_willow_03_LOD0 loc (4.4, 43.4, -0.79) scale (0.764, 1.019, 0.472) bbox z -2.80-10.94
+[p10r2_mask] other: ENV_tree_willow_04_LOD0 loc (-2.6, 45.9, -0.8) scale (0.658, 0.691, 0.613) bbox z -0.76-11.97
+[p10r2_mask] target: p10r2_after1_mask_target.png in 12.3s, alpha>0.5 px 8150
+[p10r2_mask] other: p10r2_after1_mask_other.png in 10.1s, alpha>0.5 px 10276
+[p10r2_mask] hero (lagoon) face index 0
+[p10r2_mask] silhouette target: {'own_px': 8150, 'rotunda_prism_px': 8049, 'aperture_px': 962, 'column_in_front_px': 453, 'in_wall_plane_px': 95, 'opening_any_face_px': 414, 'hero_arch_opening_px': 0, 'side_arch_opening_px': 414, 'see_through_px': 0, 'drum_px': 0, 'side_rows': [603, 618], 'hero_arch_rows': None, 'hero_arch_cols': None, 'opening_rows': [603, 618], 'opening_cols': [742, 803]}
+[p10r2_mask] silhouette other: {'own_px': 10276, 'rotunda_prism_px': 10270, 'aperture_px': 2698, 'column_in_front_px': 632, 'in_wall_plane_px': 1, 'opening_any_face_px': 2065, 'hero_arch_opening_px': 2065, 'side_arch_opening_px': 0, 'see_through_px': 712, 'drum_px': 0, 'side_rows': None, 'hero_arch_rows': [561, 614], 'hero_arch_cols': [882, 936], 'opening_rows': [561, 614], 'opening_cols': [882, 936]}
+[p10r2_mask] silhouette ref169: {'own_px': 12443, 'rotunda_prism_px': 11917, 'aperture_px': 937, 'column_in_front_px': 540, 'in_wall_plane_px': 0, 'opening_any_face_px': 397, 'hero_arch_opening_px': 0, 'side_arch_opening_px': 397, 'see_through_px': 0, 'drum_px': 0, 'side_rows': [602, 618], 'hero_arch_rows': None, 'hero_arch_cols': None, 'opening_rows': [602, 618], 'opening_cols': [746, 803]}
+[p10r2_mask] done in 38.4s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 18554 exited rc=0 after 40 s (max 900)
