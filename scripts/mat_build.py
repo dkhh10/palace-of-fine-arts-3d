@@ -1144,7 +1144,8 @@ def build_water():
     near = t.maprange(depth, 95.0, 9.0, 0.0, 1.0)
     # anisotropy: crests run longer along X (across the hero view), so the reflection breaks into vertical streaks.
     # v3 used 0.33 (3x elongation), which is what made the near-field runs so long; 0.5 keeps the character.
-    Pa = t.combxyz(t.mul(wx, 0.36), wy, 0.0)
+    # Phase 10 r2: the X stretch is a named node so scripts/mat_p10w_sweep.py can address it (see the r2 note below).
+    Pa = t.combxyz(t.mul(wx, t.value(0.36, "WATER_ANISO_X")), wy, 0.0)
     Ps = t.combxyz(t.mul(wx, 0.55), wy, 0.0)
     h1 = t.noise(Pa, 3.3, detail=3, rough=0.55, w=t.mul(time, 1.0))          # 0.3 m ripples
     h2 = t.noise(Ps, 0.33, detail=2, rough=0.5, w=t.mul(time, 0.3))          # 3 m swell
@@ -1367,7 +1368,8 @@ def foliage_image(name, data=False):
 
 
 def leaf_material(name, texture, translucent, rough=0.55, hue_var=0.05, val_var=0.3, seed=20.0, spec=0.3, translucency=0.3,
-                  sheen=0.15, tint=(1.0, 1.0, 1.0), alpha_cut=0.5, cluster_var=0.2, nrm_strength=0.6):
+                  sheen=0.15, tint=(1.0, 1.0, 1.0), alpha_cut=0.5, cluster_var=0.2, nrm_strength=0.6,
+                  grade_sat=1.0, grade=(1.0, 1.0, 1.0)):
     """Alpha-cut, two-sided, translucent card material on a generated RGBA foliage texture (UV map 'UVMap').
     Per-tree hue/value variation from Object Info Random, cluster-scale variation from object-space noise."""
     m = ML.new_material(name)
@@ -1382,6 +1384,9 @@ def leaf_material(name, texture, translucent, rough=0.55, hue_var=0.05, val_var=
     hue = t.madd(t.sub(inst.outputs["R2"], 0.5), hue_var, 0.5)
     val = t.madd(t.sub(inst.outputs["R3"], 0.5), val_var, 1.0)
     c = t.vmul(tex.outputs["Color"], tint)
+    # Phase 10 r2 grade (named so scripts/mat_p10w_sweep.py can address it): saturation, then a per-channel gain.
+    c = t.hsv(c, sat=t.value(grade_sat, "LEAF_SAT"))
+    c = t.vmul(c, t.rgb(grade, "LEAF_GRADE"))
     c = t.hsv(c, hue=hue, val=val)
     cl = t.maprange(t.noise(P, 1.2, detail=2), 0.3, 0.7, 1.0 - cluster_var, 1.0 + cluster_var)
     c = t.vscale(c, cl)
