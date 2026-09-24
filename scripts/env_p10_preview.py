@@ -6,7 +6,7 @@ would read several times low.  Rendering native keeps the before / after and the
 
     scripts/blender_run.sh 900 -- --background --python scripts/env_p10_preview.py -- --tag before --cams 01 02 05
 
-Writes renders/previews/environment/p9r3_<tag>_cam<NN>.png.
+Writes renders/previews/environment/<prefix>_<tag>_cam<NN>.png (--prefix, default p10; round 2 uses p10r2).
 """
 import os
 import sys
@@ -30,6 +30,7 @@ def arg(name, default=None, n=1):
 
 
 TAG = arg("--tag", "after")
+PREFIX = arg("--prefix", "p10")
 CAMS = arg("--cams", ["01", "02", "05"], n=6)
 SAMPLES = int(arg("--samples", 32))
 BLEND = arg("--blend", str(common.ROOT / "master.blend"))
@@ -54,7 +55,7 @@ for c in CAMS:
         print(f"[env_p10_preview] no camera for {c}")
         continue
     scene.camera = cam
-    fp = OUT / f"p10_{TAG}_cam{c}.png"
+    fp = OUT / f"{PREFIX}_{TAG}_cam{c}.png"
     scene.render.filepath = str(fp)
     t = time.time()
     bpy.ops.render.render(write_still=True)

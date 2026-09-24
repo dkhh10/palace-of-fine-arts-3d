@@ -1,0 +1,15 @@
+00:00.466  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env2/master.blend"
+00:27.937  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env2/renders/previews/environment/p10r2_before_mask_target.png'
+00:50.402  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env2/renders/previews/environment/p10r2_before_mask_other.png'
+[common] set_lod viewport=LOD1 render=LOD0: 6574 objects, 6 collections
+[p10r2_mask] target: ENV_tree_willow_03_LOD0 loc (6.9, 43.4, -0.83) scale (0.909, 1.213, 0.786) bbox z -2.80-10.94
+[p10r2_mask] other: ENV_tree_willow_04_LOD0 loc (-2.6, 45.9, -0.8) scale (0.658, 0.691, 0.613) bbox z -0.76-11.97
+[p10r2_mask] target: p10r2_before_mask_target.png in 22.8s, alpha>0.5 px 16686
+[p10r2_mask] other: p10r2_before_mask_other.png in 20.7s, alpha>0.5 px 10276
+[p10r2_mask] silhouette target: {'own_px': 16686, 'rotunda_prism_px': 9450, 'aperture_px': 4551, 'column_in_front_px': 1036, 'in_wall_plane_px': 554, 'arch_opening_px': 2961, 'drum_px': 0, 'opening_rows': [538, 618], 'opening_cols': [742, 793]}
+[p10r2_mask] silhouette other: {'own_px': 10276, 'rotunda_prism_px': 10270, 'aperture_px': 2698, 'column_in_front_px': 632, 'in_wall_plane_px': 1, 'arch_opening_px': 2065, 'drum_px': 0, 'opening_rows': [561, 614], 'opening_cols': [882, 936]}
+[p10r2_mask] done in 62.0s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 17339 exited rc=0 after 63 s (max 900)
