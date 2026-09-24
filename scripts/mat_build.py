@@ -815,7 +815,7 @@ def C(r, g, b):
     return (r, g, b, 1.0)
 
 
-COL_VALUE = 1.35      # Phase 10 r2: MAT_column_rose albedo scale (see the material)
+COL_VALUE = 1.22      # Phase 10 r2: MAT_column_rose albedo scale (see the material)
 
 
 def CV(r, g, b):
@@ -930,9 +930,9 @@ def build_concrete_family():
     # value falls only 6 %, so the remaining 1.27x brightness stays where round 4 put it: the entablature's shadow
     # (lighting). `Tone Variation` and the macro layer supply the "strong tonal variation" the sheet describes.
     concrete_material("MAT_column_rose", "concrete_wall_008", 6.0, {
-        # PHASE 10 r2 (the projection retune at weight 0): albedo x COL_VALUE 1.35 (with scripts/mat_p10_integrate.py
-        # --col-sat 0.70 --col-hue -10): the QA column mask 71.6 / 28.8 / 0.699 -> ~98-110 / 28.7 / 0.617 against ref
-        # 169's 96.8 / 24.8 / 0.585 (sweep case k1 as a Hue/Sat Value 1.35 after PFA_column; here it is the albedo).
+        # PHASE 10 r2 (the projection retune at weight 0): albedo x COL_VALUE (with scripts/mat_p10_integrate.py
+        # --col-sat 0.68 --col-hue -10).  At x1.35 / sat 0.70 the QA column mask measured 114.4 / 28.6 / 0.606 against
+        # ref 169's 96.8 / 24.8 / 0.585 (before 73.5 / 28.9 / 0.700): hue and sat in the window, lum overshooting, so 1.22.
         "Base Color": CV(0.298, 0.1385, 0.079), "Grey Color": CV(0.284, 0.175, 0.098), "Grey Drift": 0.26,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.34, "Block Size": 3.2, "Blotch Size": 1.1,
         "Drift Size": 4.5,
@@ -2048,21 +2048,23 @@ def build_all_materials():
     build_water()
     # PHASE 10 r2 (ENV r1 hand-off, docs/briefs/phase10_water.md addendum 1): the conifer mass measured (62,56,15) luma 53 B/G
     # 0.27 against ref 169's (114,109,84) luma 108 B/G 0.77 (scripts/mat_p10w_measure.py, box 1s non-sky pixels) -- a
-    # stop and more too dark and far too yellow.  The grade (saturation x0.20, gain (2.6, 3.4, 7.0)), the transmitted
-    # blue restored (translucent B 0.5 -> 1.0: the old tint halved the only blue a backlit needle has), and the waxy
-    # needle's sky specular (IOR level 0.3 -> 0.8, sheen 0.15 -> 0.3) land it at (115,104,68) luma 103 B/G 0.65
-    # (sweep case j1).  Saturation 0.15 / gain (2.4,3.2,7.5) (j2) reads blue-spruce and frosts the shrubs.
-    CON = dict(grade_sat=0.20, grade=(2.6, 3.4, 7.0), sheen=0.3)
-    leaf_material("MAT_leaf_cypress", "needles_cypress", (0.9, 1.1, 1.0), rough=0.6, hue_var=0.05, val_var=0.35, seed=20.0, translucency=0.25, alpha_cut=0.45,
-                  spec=0.8, **CON)
+    # stop and more too dark and far too yellow.  Measured sweep (docs/materials_notes.md "Phase 10 r2"): the B/G target
+    # is reachable ONLY with a blue albedo -- case j1 (saturation x0.20, gain (2.6, 3.4, 7.0) = linear albedo
+    # 0.21/0.30/0.53) lands the box at luma 103.7 / B/G 0.66 and renders the conifers LAVENDER from above (cam06).
+    # Shipped: an olive-grey albedo (B < G, R < G; cypress ~0.21/0.30/0.23 linear), the transmitted blue partly restored
+    # (translucent B 0.5 -> 0.8; the old tint halved the only blue a backlit needle has) and the waxy needle's sky
+    # specular (IOR level 0.3 -> 0.55, sheen 0.15 -> 0.3): luma about +1 stop to ~100, B/G ~0.37 (ref 0.77, reported).
+    CON = dict(grade_sat=0.35, grade=(2.9, 3.4, 3.3), sheen=0.3)
+    leaf_material("MAT_leaf_cypress", "needles_cypress", (0.9, 1.1, 0.8), rough=0.6, hue_var=0.05, val_var=0.35, seed=20.0, translucency=0.25, alpha_cut=0.45,
+                  spec=0.55, **CON)
     # conifers other than cypress (Monterey pine, redwood): darker, bluer, longer needles -- ENV maps pines here
-    leaf_material("MAT_leaf_pine", "needles_pine", (0.7, 0.95, 1.0), rough=0.55, hue_var=0.04, val_var=0.28, seed=27.0,
-                  translucency=0.18, spec=0.8, tint=(0.80, 0.92, 0.78), alpha_cut=0.42, nrm_strength=0.5, **CON)
+    leaf_material("MAT_leaf_pine", "needles_pine", (0.7, 0.95, 0.8), rough=0.55, hue_var=0.04, val_var=0.28, seed=27.0,
+                  translucency=0.18, spec=0.55, tint=(0.80, 0.92, 0.78), alpha_cut=0.42, nrm_strength=0.5, **CON)
     leaf_material("MAT_leaf_eucalyptus", "leaves_eucalyptus", (0.8, 1.0, 0.5), rough=0.42, hue_var=0.06, val_var=0.3, seed=21.0, spec=0.4, translucency=0.3)
     # the willows (and ENV's generic broadleaf) -- same hand-off, a gentler grade: ref 169's willow is sunlit yellow-green
-    # (174,159,85) B/G 0.53, not grey.  Willow leaf px (63,61,12) -> (96,91,43) B/G 0.47 (case j1).
-    leaf_material("MAT_leaf_broadleaf", "leaves_broadleaf", (0.8, 1.2, 0.8), rough=0.5, hue_var=0.07, val_var=0.35, seed=22.0, translucency=0.35,
-                  spec=0.5, sheen=0.3, grade_sat=0.40, grade=(3.2, 3.2, 4.4))
+    # (174,159,85) B/G 0.53, not grey; an albedo kept yellow-green (B < G), between sweep cases m1 and m2.
+    leaf_material("MAT_leaf_broadleaf", "leaves_broadleaf", (0.8, 1.2, 0.7), rough=0.5, hue_var=0.07, val_var=0.35, seed=22.0, translucency=0.35,
+                  spec=0.45, sheen=0.25, grade_sat=0.55, grade=(3.0, 3.0, 2.8))
     # QA-05-10 / ENV r7 hand-off: the hero shore band measured lum 91.1 against ref 169's 115.6 at sat 0.487
     # against the photo's 0.663 -- so this round can spend BOTH, and the cheapest lum with the least saturation
     # cost is translucency: a backlit leaf is lighter and less chromatic than the same leaf lit from the front.

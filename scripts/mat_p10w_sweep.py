@@ -104,7 +104,7 @@ if SETN == "5":
     WATER3, FOLIAGE3 = [], FOLIAGE5
 if SETN == "2":
     COLUMN = COLUMN2
-if SETN in ("3", "4"):
+if SETN in ("3", "4", "5"):
     WATER2 = WATER3
     FOLIAGE2 = [(tag, c) for tag, c in FOLIAGE3]
 
