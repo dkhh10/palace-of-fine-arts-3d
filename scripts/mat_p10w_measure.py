@@ -38,7 +38,7 @@ import env_p10_boxes as EB                                 # noqa: E402
 W, H = 1920, 1080
 REFL = BOXES["water_refl"]
 OPEN = ("near_water_sky", "ripples", "lagoon_flank")
-CAM05_LAGOON = (0, 560, 1280, 720)       # cam05 lagoon band (bottom of the 1280x720 frame): sat >= 0.25
+CAM05_LAGOON = (448, 619, 960, 713)     # mat_r8_measure.CAM05_BAND (0.35 0.86 0.75 0.99) at 1280x720: sat >= 0.25
 CAM06_LAGOON = (60, 380, 340, 500)       # mat_r7fix_cam06's open-water box (1280x720)
 
 
