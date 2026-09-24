@@ -140,6 +140,12 @@ def verify():
     for (sp, x, y, h, note) in env_trees.PLAN:
         d = math.hypot(x, y)
         rad = L.CROWN_R.get(sp, 0.35) * h
+        # Phase 10 r2: a per-instance widened crown (env_trees.P10R2_WIDEN) is ringed with its real radius
+        w = getattr(env_trees, "P10R2_WIDEN", {}).get(note)
+        if w:
+            rad = max(L.CROWN_R.get(sp, 0.35), env_trees.P10_REAL_R.get(sp, 0.35) * env_trees.CROWN_XY.get(sp, 1.0) * w) * h
+            print(f"  {'ok  ' if d - rad >= PODIUM_R + CLEAR else 'FAIL'} P10R2 {sp:12s} ({x:6.1f},{y:6.1f}) h{h:4.1f} "
+                  f"w{w:.1f} real crown {rad:4.1f} reaches r {d - rad:5.1f} (ring {PODIUM_R + CLEAR:.0f})")
         if d - rad >= PODIUM_R + CLEAR or d < 1e-3:
             continue
         fails += 1

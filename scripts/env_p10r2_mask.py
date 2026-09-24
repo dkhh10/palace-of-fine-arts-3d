@@ -52,7 +52,7 @@ BLEND = arg("--blend", str(common.ROOT / "master.blend"))
 OUT = common.RENDERS / "previews" / "environment"
 OUT.mkdir(parents=True, exist_ok=True)
 W, H = 1920, 1080
-TARGETS = {"target": "P hero-shore willow, ref 169 x 0.33", "other": "P hero-shore willow, ref 169 x 0.44"}
+TARGETS = {"target": "P hero-shore willow, ref 169 x 0.3", "other": "P hero-shore willow, ref 169 x 0.44"}
 
 t0 = time.time()
 bpy.ops.wm.open_mainfile(filepath=BLEND, load_ui=False)
@@ -122,8 +122,17 @@ def isolate(o):
         ob.is_holdout = ob is not o
 
 
+def load_alpha(fp):
+    img = bpy.data.images.load(str(fp), check_existing=False)
+    px = np.array(img.pixels[:], dtype=np.float32).reshape(H, W, 4)[::-1]      # row 0 = top
+    bpy.data.images.remove(img)
+    return px[..., 3]
+
+
 def render_alpha(key):
     fp = OUT / f"p10r2_{TAG}_mask_{key}.png"
+    if "--classify-only" in args:
+        return load_alpha(fp)
     scene.render.filepath = str(fp)
     t = time.time()
     bpy.ops.render.render(write_still=True)
@@ -139,13 +148,24 @@ for key in ("target", "other"):
     isolate(objs[key])
     alphas[key] = render_alpha(key)
     tgt_coll.objects.unlink(objs[key])
+# --extra label=path.png: classify any other mask with the same rays (ref 169's hand-segmented willow, as a calibration
+# of what "the arch opening" means in the photo the rule points at)
+for a in args:
+    if "=" in a and a.endswith(".png"):
+        lab, _, pth = a.partition("=")
+        alphas[lab] = load_alpha(pth if os.path.isabs(pth) else str(common.ROOT / pth))
 
 # ---------------------------------------------------------------- item 3: rotunda arch opening / drum under a mask
-cm = cam.matrix_world
+vl.update()                     # matrix_world is stale until the depsgraph evaluates (--classify-only renders nothing)
+cm = cam.matrix_world.copy()
 tr, br, bl, tl = [cm @ v for v in cam.data.view_frame(scene=scene)]          # world corners
 O = np.array(cm.translation)
 dg = bpy.context.evaluated_depsgraph_get()
 rot = [o for o in scene.objects if o.type == "MESH" and o.name.startswith("ARCH_rotunda") and o.visible_get()]
+_fwd = np.array((cm.to_3x3() @ Vector((0, 0, -1))))[:2]
+FACE_HERO = int(np.argmin([np.array([-math.cos(math.radians(A.FACE_AZ0 + 45 * k)),
+                                     math.sin(math.radians(A.FACE_AZ0 + 45 * k))]) @ _fwd for k in range(8)]))
+print(f"[p10r2_mask] hero (lagoon) face index {FACE_HERO}")
 DEEP = A.WALL_THICKNESS + 0.5      # a first hit deeper than this behind the face plane = seen THROUGH the arch
 
 
@@ -198,6 +218,10 @@ def classify(alpha, key):
     front = aperture & (behind < -0.05)                         # a column / pedestal in front of the aperture
     in_plane = aperture & (behind >= -0.05) & (behind <= DEEP)   # parapet / reveal stone inside the wall thickness
     opening = aperture & ~(behind <= DEEP)                       # seen through: interior beyond the wall, or beyond
+    # the lagoon face (normal most nearly facing the camera) carries THE arch of the hero; the others are side arches
+    arch = opening & (face == FACE_HERO)
+    side = opening & (face != FACE_HERO)
+    through = opening & np.isinf(behind)                         # nothing of the rotunda behind: sky / hall / wing
     dbg = np.zeros((H, W, 4), dtype=np.float32)
     for m, c in ((front, (0, 0, 1)), (in_plane, (0, 1, 0)), (opening, (1, 0, 0)), (drum, (1, 0, 1))):
         dbg[ys[m], xs[m]] = (*c, 1)
@@ -208,7 +232,11 @@ def classify(alpha, key):
     img.save()
     return dict(own_px=int(len(D)), rotunda_prism_px=int(enters.sum()), aperture_px=int(aperture.sum()),
                 column_in_front_px=int(front.sum()), in_wall_plane_px=int(in_plane.sum()),
-                arch_opening_px=int(opening.sum()), drum_px=int(drum.sum()),
+                opening_any_face_px=int(opening.sum()), hero_arch_opening_px=int(arch.sum()),
+                side_arch_opening_px=int(side.sum()), see_through_px=int(through.sum()), drum_px=int(drum.sum()),
+                side_rows=[int(ys[side].min()), int(ys[side].max())] if side.any() else None,
+                hero_arch_rows=[int(ys[arch].min()), int(ys[arch].max())] if arch.any() else None,
+                hero_arch_cols=[int(xs[arch].min()), int(xs[arch].max())] if arch.any() else None,
                 opening_rows=[int(ys[opening].min()), int(ys[opening].max())] if opening.any() else None,
                 opening_cols=[int(xs[opening].min()), int(xs[opening].max())] if opening.any() else None)
 

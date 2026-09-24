@@ -1,0 +1,7 @@
+[env_p10r2_plan] shipped PLAN entry
+  PASS PLAN   (  4.40, 43.40) h 5.4 w1.40  lagoon  1.61 dry True  gallery 73.3  ring  38.8  space  7.4  |  cam01 trunk x 0.401 span 0.356-0.447 top row  592 d  58.6  |  cam02 x 0.02-0.10 y 0.79  cam05 x 0.54-0.63 y 0.71-0.82 d 68
+[env_p10r2_plan] 0 failing
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 18160 exited rc=0 after 1 s (max 300)

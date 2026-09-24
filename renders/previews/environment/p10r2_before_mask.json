@@ -48,8 +48,17 @@
    "aperture_px": 4551,
    "column_in_front_px": 1036,
    "in_wall_plane_px": 554,
-   "arch_opening_px": 2961,
+   "opening_any_face_px": 2961,
+   "hero_arch_opening_px": 0,
+   "side_arch_opening_px": 2961,
+   "see_through_px": 0,
    "drum_px": 0,
+   "side_rows": [
+    538,
+    618
+   ],
+   "hero_arch_rows": null,
+   "hero_arch_cols": null,
    "opening_rows": [
     538,
     618
@@ -65,8 +74,20 @@
    "aperture_px": 2698,
    "column_in_front_px": 632,
    "in_wall_plane_px": 1,
-   "arch_opening_px": 2065,
+   "opening_any_face_px": 2065,
+   "hero_arch_opening_px": 2065,
+   "side_arch_opening_px": 0,
+   "see_through_px": 712,
    "drum_px": 0,
+   "side_rows": null,
+   "hero_arch_rows": [
+    561,
+    614
+   ],
+   "hero_arch_cols": [
+    882,
+    936
+   ],
    "opening_rows": [
     561,
     614
@@ -74,6 +95,32 @@
    "opening_cols": [
     882,
     936
+   ]
+  },
+  "ref169": {
+   "own_px": 12443,
+   "rotunda_prism_px": 11917,
+   "aperture_px": 937,
+   "column_in_front_px": 540,
+   "in_wall_plane_px": 0,
+   "opening_any_face_px": 397,
+   "hero_arch_opening_px": 0,
+   "side_arch_opening_px": 397,
+   "see_through_px": 0,
+   "drum_px": 0,
+   "side_rows": [
+    602,
+    618
+   ],
+   "hero_arch_rows": null,
+   "hero_arch_cols": null,
+   "opening_rows": [
+    602,
+    618
+   ],
+   "opening_cols": [
+    746,
+    803
    ]
   }
  }
