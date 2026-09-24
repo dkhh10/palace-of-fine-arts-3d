@@ -1192,3 +1192,13 @@ The brief's premise was wrong: ref 169's willow is low and broad (crown top 5.1 
 8.5 -> 4.0 m so the central arch opening is uncovered (2,065 -> 0 px). Fix-now 2 by census: willow_03 trunk 43.6 m from the centre, worst-case crown reach
 36.7 m vs the 37 m podium ring, a 0.3 m intrusion into a plan margin with 0 px on the drum or arch: accepted, carried. Carried: shadow / frame gates size crowns
 at CROWN_R while the real crown is 2.4x that (hero-shore shade 18 %, lower bound); the widening is keyed on the note text. Tris vs r1 +0.9 / +1.3 / +0.5 %.
+
+## 2026-09-24 · Projection r1 delivered (phase10-proj 81f7983; report docs/briefs/phase10_projection_report.md); final review in flight
+Registration redone after the hold: peak metric that self-calibrates (control 10/20/40 px read back 10.5/20.5/40.0), 0.71 px fit residual after per-camera
+rotation fixes, 43 of 71 cameras pass the gates (ref_169 itself excluded), the independent chamfer 6.09 -> 5.29 px. Delighting: per-photo gain+gamma, attic
+inter-view spread 0.701 -> 0.315 (0.45x, passes). Integration at weight 0.6 breaks two holds (shaded attic lum 129.1 vs 121.3 +-2; column sat 0.658 vs 0.585
++-0.04); the lead's sheet view: before/after differ visibly only on the column shafts (attic reliefs, frieze and drum band are ORN meshes without UVBake).
+Decision: merge on the review, retune the two holds in the round-2 materials pass (docs/briefs/phase10_water.md addendum), no further projection round.
+Exception logged (decision (b)): a per-object U offset is impossible because the shaft charts are Smart-UV islands, not one cylinder strip; the columns carry
++-3 % value jitter plus a 0.6-1.0 per-object share of the projected map. Residuals for docs/delivery.md: ORN attic reliefs unreachable without an ORN UVBake
+layer; colonnade uncovered; east-shore backdrop houses stand where photo stations are (ENV). The agent ran ~6.5 h against a 5 h cap to close the review items.
