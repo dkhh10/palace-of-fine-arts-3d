@@ -1219,5 +1219,5 @@ hue 48 (max 45) still short, all four values closer to ref; near-water sat 0.191
 54 -> 100 (ref 108) passes, B/G 0.35 vs 0.77 fails (the only albedo that reached it read lavender from cam06: rejected, olive-grey shipped). Columns 104.2 / 28.6 /
 0.614 vs ref 96.8 / 24.8 / 0.585: hue and sat inside the window. Willow box 2 dark 29.1 % vs the round-1 before 28.4 % (ref 8.9): 0.7 points is inside the 32 vs
 64 spp noise and ENV r2 already re-placed the willows on the photo's footprint, so the r1 densification stays (the revert clause in the ENV r1 entry is closed).
-Hand-off logged, not applied: ref 169's open-water boxes sit at sat 0.14-0.25, so the window's sat floor (0.22) describes the render, not the photo; retarget
-only with the user. The lead viewed the sheet: reflection streaks, olive conifers and rose shafts all read closer to ref 169.
+Correction (review 71fd65e): near-water sat 0.191 is a pass -> fail regression on a box whose own ref value is 0.229; the 0.143 came from the ripples box, so
+the window's sat floor stands. Dark-gap share (6.3 % vs ref 16.2) moved away from ref, mostly from the water change itself. The lead viewed the sheet: reflection streaks, olive conifers and rose shafts all read closer to ref 169.
