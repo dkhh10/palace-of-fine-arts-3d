@@ -53,7 +53,9 @@ def load_views():
     for k in meta["cams"]:
         c = cams[k]
         r = edges.get(c["file"], 99.0)
-        if r > MAX_RES_PX:
+        # usable: peak residual <= 6 px, physically plausible station, and a per-camera correction <= 1.5 deg (a larger
+        # one means the peak search locked onto a different feature; the global error was ~0.9 deg)
+        if r > MAX_RES_PX or not c.get("usable_physical", True) or c.get("refine_rot_deg", 0.0) > 1.5:
             continue
         d = C.read_passes(DEPTH_DIR / f"cam_{k:02d}.exr")
         Z = np.where(d["alpha"] > 0.5, d["z"], np.inf).astype(np.float32)

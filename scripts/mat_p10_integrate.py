@@ -79,6 +79,31 @@ b_in = next(s for s in mix.inputs if s.name == "B" and s.type == "RGBA")
 L.new(w2.outputs[0], mix.inputs["Factor"]); L.new(src, a_in); L.new(mul.outputs[0], b_in)
 col_out = next(s for s in mix.outputs if s.name == "Result" and s.type == "RGBA")
 L.new(col_out, go.inputs["Color"])
+# the rose column shafts: ref 169's column mask (mat_r7_measure.columns on the REF169_XF-warped photo) is hue 24.8 /
+# sat 0.585; the atlas is mean-1 and neutral, so the shaft's mean colour is set here, on MAT_column_rose only, by a
+# Hue/Saturation node after the PFA_column group (idempotent: P10_colsat is removed and the link restored first).
+COL_SAT = float(args[args.index("--col-sat") + 1]) if "--col-sat" in args else 1.0
+COL_HUE = float(args[args.index("--col-hue") + 1]) if "--col-hue" in args else 0.0      # degrees
+mt = bpy.data.materials["MAT_column_rose"].node_tree
+old = mt.nodes.get("P10_colsat")
+if old is not None:
+    src_c = old.inputs["Color"].links[0].from_socket
+    dsts = [l.to_socket for l in old.outputs["Color"].links]
+    mt.nodes.remove(old)
+    for d in dsts:
+        mt.links.new(src_c, d)
+if COL_SAT != 1.0 or COL_HUE != 0.0:
+    cgn = next(n for n in mt.nodes if n.type == "GROUP" and n.node_tree and n.node_tree.name == "PFA_column")
+    src_c = cgn.outputs["Color"]
+    dsts = [l.to_socket for l in src_c.links]
+    hs = mt.nodes.new("ShaderNodeHueSaturation"); hs.name = hs.label = "P10_colsat"
+    hs.location = (cgn.location.x + 200, cgn.location.y - 200)
+    hs.inputs["Hue"].default_value = 0.5 + COL_HUE / 360.0
+    hs.inputs["Saturation"].default_value = COL_SAT
+    mt.links.new(src_c, hs.inputs["Color"])
+    for d in dsts:
+        mt.links.new(hs.outputs["Color"], d)
+    print(f"[p10int] MAT_column_rose: saturation x{COL_SAT}, hue {COL_HUE:+.1f} deg -> {len(dsts)} consumer(s)")
 users = [m.name for m in bpy.data.materials if m.node_tree and any(
     n.type == "GROUP" and n.node_tree == ng for n in m.node_tree.nodes)]
 print(f"[p10int] PFA_concrete: atlas wired (weight {WEIGHT}); materials using the group: {users}")

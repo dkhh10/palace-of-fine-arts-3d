@@ -6,15 +6,15 @@
 No bpy.  Inputs: work/sfm.npz (mat_p10_sfm.py dump) and work/arch_samples.npz (mat_p10_meshdump.py samples: area-
 weighted samples of the rotunda's ARCH LOD0 surfaces in world metres).
 
-Method
-  1. Gravity: the mean of the 71 cameras' image-up vectors (-R^T e_y) in model space.  Photos of a building are
-     taken level to a few degrees; the per-camera spread is printed.
-  2. Heading: the mean viewing direction, projected on the horizontal, is set to the reverse of the lagoon face's
-     normal (face 00, az 82) -- every one of the 71 cameras is on the lagoon side (probe: azimuths -34..+23 deg).
-  3. Scale and translation: multi-start over scale (4-24 m per model unit), heading (+-40 deg) and height; each start
-     runs a trimmed ICP (the 60 % closest points, point-to-plane) with rotation about the vertical, scale and
-     translation free.  Best trimmed RMS wins.
-  4. Full 7-DOF trimmed ICP from the winner (gravity freed), trim 50 %.
+Method (as run; see docs/materials_notes.md "Phase 10 r1", step-2 recipe = scripts/mat_p10_step2.sh)
+  1. Gravity: the direction most orthogonal to the 71 cameras' RIGHT vectors (smallest singular vector).
+  2. Axis: RANSAC circle through the sparse points at column-to-attic height.
+  3. Grid search scale 14-20 m/unit x yaw 0-359 x tz 0/1/2 by inlier count; the octagon's 45-deg symmetry makes every
+     sector score within 2 %, so the sector is FORCED by the camera-side prior (--sector=0: the photos are on the lagoon
+     side, cameras centred on face 00 at az 82), then yaw-only and 7-DOF trimmed point-to-plane ICP.
+  4. `cameras` writes cameras.json from the similarity, plus the edge refinements ONLY when named on the command line
+     (--with-D: work/refine.json, --with-cams: work/refine_cams.json), and gates every camera on physical bounds
+     (z -0.5..+6 m, 30-250 m from the rotunda axis) -> `usable` false.  `icp` deletes stale refine files.
 The final similarity maps model x -> s R x + T (world).  The acceptance test is NOT this residual but the edge
 reprojection (mat_p10_edges.py): the sparse cloud contains ornament ARCH does not model (capitals, relief panels).
 """
@@ -117,6 +117,8 @@ def circle_ransac(Q, rng, rmin, rmax, tol, iters=20000):
 
 
 def cmd_icp():
+    for f in ("refine.json", "refine_cams.json", "edges.json"):          # stale against a new similarity
+        (WORK / f).unlink(missing_ok=True)
     """1 gravity (right vectors); 2 the rotunda axis = RANSAC circle through the points at column-to-attic height;
     3 grid search of scale x heading x height by inlier count (points within 0.4 m of the ARCH surface samples,
     rotunda + site + colonnade, so the octagon's 45-degree symmetry is broken by the wings and the stairs);
@@ -255,10 +257,13 @@ def cmd_cameras():
     s, Rs, Ts = sim["s"], np.array(sim["R"]), np.array(sim["T"])
     D = None
     rp = WORK / "refine.json"
-    if rp.exists():
+    for flag, f in (("--with-D", rp), ("--with-cams", WORK / "refine_cams.json")):
+        if flag in sys.argv and not f.exists():
+            raise SystemExit(f"[align] {flag} given but {f.name} does not exist")
+    if "--with-D" in sys.argv:
         p = json.load(open(rp))["p"]
         D = (math.exp(p[0]), Rot.from_rotvec(p[1:4]).as_matrix(), np.array(p[4:7]))
-    PC = json.load(open(WORK / "refine_cams.json")) if (WORK / "refine_cams.json").exists() else {}
+    PC = json.load(open(WORK / "refine_cams.json")) if "--with-cams" in sys.argv else {}
     cams = []
     for k, name in enumerate(d["names"]):
         R, t = d["R"][k], d["t"][k]
@@ -275,25 +280,34 @@ def cmd_cameras():
             dR = Rot.from_rotvec(pc["rotvec"]).as_matrix()
             Rw, tw = dR @ Rw, dR @ tw
             Kk[0, 0] *= pc["fscale"]; Kk[1, 1] *= pc["fscale"]
+        rot_deg = float(np.degrees(np.linalg.norm(pc["rotvec"]))) if pc is not None else 0.0
         C = -Rw.T @ tw
         cams.append(dict(file=str(name), K=Kk.tolist(), k1=float(d["dist"][k]),
                          R=Rw.tolist(), t=tw.tolist(), centre=C.tolist(),
-                         size=[int(d["wh"][k][0]), int(d["wh"][k][1])]))
+                         size=[int(d["wh"][k][0]), int(d["wh"][k][1])], refine_rot_deg=rot_deg))
     extra = {}
     ep = WORK / "edges.json"
-    if ep.exists():
+    if ep.exists() and "--with-edges" in sys.argv:
         extra = json.load(open(ep))
         for c in cams:
             c["residual_px"] = extra.get("per_image", {}).get(c["file"])
+    n_bad = 0
+    for c in cams:                                  # physical gate (review part 1, finding 3)
+        z = c["centre"][2]; r = math.hypot(c["centre"][0], c["centre"][1])
+        c["usable_physical"] = bool(-0.5 <= z <= 6.0 and 30.0 <= r <= 250.0)
+        n_bad += not c["usable_physical"]
     sim["world_correction_D"] = None if D is None else dict(s=D[0], R=D[1].tolist(), T=D[2].tolist())
     sim["per_camera_refined"] = len(PC)
-    json.dump(dict(note="world = master metres (origin rotunda floor centre, +Y lagoon, +Z up). Pinhole x = K (R X + t), "
+    json.dump(dict(note="world = master metres (origin rotunda floor centre, +Y lagoon, +Z up). World-to-camera, COLMAP / "
+                        "OpenCV axes (+x right, +y down, +z forward): pinhole x = K (R X + t), "
                         "then COLMAP SIMPLE_RADIAL: x_n *= 1 + k1 r^2 on normalised coords. size = the registered image "
                         "size (the probe's 1600 px thumbnail of reference/photos/raw/<src>).",
                    similarity=sim, cameras=cams), open(OUT / "cameras.json", "w"), indent=1)
     Cs = np.array([c["centre"] for c in cams])
     az = (np.degrees(np.arctan2(Cs[:, 1], -Cs[:, 0])) + 360) % 360
     rr = np.hypot(Cs[:, 0], Cs[:, 1])
+    print(f"cameras.json: {n_bad} of {len(cams)} cameras fail the physical gate (z -0.5..6 m, r 30-250 m): "
+          f"{[c['file'][:7] for c in cams if not c['usable_physical']]}")
     print(f"cameras.json: {len(cams)} cameras; distance {np.percentile(rr, [5, 50, 95]).round(1)} m, "
           f"azimuth {np.percentile(az, [5, 50, 95]).round(1)} deg, height {np.percentile(Cs[:, 2], [5, 50, 95]).round(1)} m")
 

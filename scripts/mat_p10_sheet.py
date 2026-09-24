@@ -12,9 +12,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mat_r7_measure import load, stats, COL_BOX
 import mat_projection as MP
 
-CROPS = {  # 1920x1080 hero frame, 100 %
-    "attic": (860, 196, 1100, 300), "drum": (860, 120, 1100, 200), "column shaft": (700, 300, 940, 420),
-    "entablature": (860, 250, 1100, 330), "arch": (840, 300, 1080, 460)}
+CROPS = {  # 1920x1080 hero frame, 100 % (240 x 80..120 px, read off the before hero)
+    "attic": (840, 170, 1080, 270), "drum": (840, 90, 1080, 170), "column shaft": (1000, 360, 1240, 480),
+    "entablature": (840, 290, 1080, 350), "arch": (860, 360, 1100, 470)}
 
 
 def crop(a, b):
