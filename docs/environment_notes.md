@@ -305,7 +305,7 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 167 | redwood | -83 | -14 | 17 | HB hall east-face belt (8d r2) |
 | 168 | cypress | -88 | -13 | 15 | HB hall east-face belt (8d r2) |
 | 169 | cypress | -92 | -6 | 14 | HB hall east-face belt (8d r2) |
-| 170 | cypress_column | -26 | 33 | 19 | A p10 NE mass, front column on the rotunda's right edge (ref 169 x 0.66-0.71) |
+| 170 | cypress_column | -26 | 33 | 20 | A p10 NE mass, front column on the rotunda's right edge (ref 169 x 0.66-0.71); 19 -> 20 m after the first after-render (crown top 422 px vs ref 398) |
 | 171 | cypress_column | -33 | 25 | 19 | A p10 NE mass, second column behind the peninsula bed (ref 169 x 0.69-0.76); 20 -> 19 m: at 20 m it shades 1 more north-wing band sample, 21.2 -> 22.5 % against SHADOW_TARGET 22 % |
 <!-- PLAN_TABLE_END -->
 
