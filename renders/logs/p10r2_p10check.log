@@ -1,0 +1,9 @@
+
+[env_p10_plan] env_trees.P10_ADD
+  PASS A          cypress_column ( -26.5,  32.6) h 20.0 w1.40  lagoon   2.0  space  4.4  ring  38.0  cam01 x 0.659-0.712 top y 0.329 (px  356) d  65.0  cam02 x 0.04-0.24 y 0.32  cam05 x 0.81-0.92 y 0.44-0.74 d 84
+  PASS A          cypress_column ( -33.2,  24.6) h 19.0 w1.80  lagoon   3.5  space  5.4  ring  37.5  cam01 x 0.698-0.756 top y 0.370 (px  400) d  72.0  cam02 x 0.17-0.36 y 0.30  cam05 x 0.83-0.92 y 0.49-0.75 d 94
+[env_p10_plan] 0 failing P10_ADD entries
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 19505 exited rc=0 after 0 s (max 300)

@@ -26,3 +26,11 @@ Cycles cam01 after-frame vs ref 169: conifer mass mean RGB (63,57,17) luma 51 vs
 luma 155; blue/green 0.19-0.30 vs 0.77. Target: leaf albedo about +1 stop, less saturated, more blue (olive-grey, not yellow-green), translucency kept; land the
 conifer box luma within +-15 of ref and B/G within +-0.15, without the crowns washing out at cam05 (QA 25/26 residual). Measure with scripts/env_p10_boxes.py on
 the rebuilt master (cam01 Cycles 32 spp is enough for these boxes; it doubles as the water hero if you render at 64 spp once). Add the two foliage rows to the sheet.
+
+## Added 2026-09-24 (lead): the projection retune, same agent, same file (round 1 report docs/briefs/phase10_projection_report.md)
+Third item, after water and foliage: `scripts/mat_p10_integrate.py` (rebuild recipe: mat_build.py then `mat_p10_integrate.py -- --weight W --col-sat S --col-hue H --save`)
+shipped at weight 0.6 / col-sat 0.8 / col-hue -6 and breaks two holds on the 1080p hero boxes: shaded attic lum 129.1 (hold 121.3 +-2, ref 169 120.0) and column-shaft
+sat 0.658 (ref 0.585 +-0.04). Sweep at most three settings (start weight 0.4 / col-sat 0.7, as the projection engineer suggests) on ONE Cycles hero each (32 spp is
+enough for the boxes), keep the one that lands both inside the window with the column lum still moving toward ref (96.8; was 73.7 -> 82.3), and state the hold table.
+You own mat_p10_integrate.py's arguments only, not its logic; do not touch the atlases. Note in the report that the atlas effect is confined to the column shafts
+(the attic reliefs are ORN meshes without UVBake): that is the phase's residual, not yours.

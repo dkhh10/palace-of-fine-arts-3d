@@ -1,0 +1,127 @@
+{
+ "tag": "before",
+ "samples": 8,
+ "targets": {
+  "target": {
+   "name": "ENV_tree_willow_03_LOD0",
+   "note": "P hero-shore willow, ref 169 x 0.33-0.42; r9r LAND (9.0,45.5) -> here, ships x 0.340-0.417",
+   "height_m": 9.0,
+   "location": [
+    6.900000095367432,
+    43.400001525878906,
+    -0.8257736563682556
+   ],
+   "scale": [
+    0.9090368747711182,
+    1.2130905389785767,
+    0.7863868474960327
+   ],
+   "bbox_z": [
+    -2.7963666915893555,
+    10.939849853515625
+   ]
+  },
+  "other": {
+   "name": "ENV_tree_willow_04_LOD0",
+   "note": "P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here, ships x 0.423-0.500",
+   "height_m": 7.0,
+   "location": [
+    -2.5999999046325684,
+    45.900001525878906,
+    -0.8014360070228577
+   ],
+   "scale": [
+    0.6583746671676636,
+    0.6909143924713135,
+    0.6128381490707397
+   ],
+   "bbox_z": [
+    -0.7601627707481384,
+    11.971333503723145
+   ]
+  }
+ },
+ "silhouette": {
+  "target": {
+   "own_px": 16686,
+   "rotunda_prism_px": 9450,
+   "aperture_px": 4551,
+   "column_in_front_px": 1036,
+   "in_wall_plane_px": 554,
+   "opening_any_face_px": 2961,
+   "hero_arch_opening_px": 0,
+   "side_arch_opening_px": 2961,
+   "see_through_px": 0,
+   "drum_px": 0,
+   "side_rows": [
+    538,
+    618
+   ],
+   "hero_arch_rows": null,
+   "hero_arch_cols": null,
+   "opening_rows": [
+    538,
+    618
+   ],
+   "opening_cols": [
+    742,
+    793
+   ]
+  },
+  "other": {
+   "own_px": 10276,
+   "rotunda_prism_px": 10270,
+   "aperture_px": 2698,
+   "column_in_front_px": 632,
+   "in_wall_plane_px": 1,
+   "opening_any_face_px": 2065,
+   "hero_arch_opening_px": 2065,
+   "side_arch_opening_px": 0,
+   "see_through_px": 712,
+   "drum_px": 0,
+   "side_rows": null,
+   "hero_arch_rows": [
+    561,
+    614
+   ],
+   "hero_arch_cols": [
+    882,
+    936
+   ],
+   "opening_rows": [
+    561,
+    614
+   ],
+   "opening_cols": [
+    882,
+    936
+   ]
+  },
+  "ref169": {
+   "own_px": 12443,
+   "rotunda_prism_px": 11917,
+   "aperture_px": 937,
+   "column_in_front_px": 540,
+   "in_wall_plane_px": 0,
+   "opening_any_face_px": 397,
+   "hero_arch_opening_px": 0,
+   "side_arch_opening_px": 397,
+   "see_through_px": 0,
+   "drum_px": 0,
+   "side_rows": [
+    602,
+    618
+   ],
+   "hero_arch_rows": null,
+   "hero_arch_cols": null,
+   "opening_rows": [
+    602,
+    618
+   ],
+   "opening_cols": [
+    746,
+    803
+   ]
+  }
+ }
+}
