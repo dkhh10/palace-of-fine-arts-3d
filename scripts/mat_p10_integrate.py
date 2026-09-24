@@ -69,10 +69,27 @@ comp = node("ShaderNodeMath", "P10_r9c", operation="SUBTRACT", use_clamp=True)
 comp.inputs[0].default_value = 1.0; L.new(r9.outputs[0], comp.inputs[1])
 wv = node("ShaderNodeMath", "P10_w", operation="MULTIPLY")
 L.new(sep.outputs[0], wv.inputs[0]); wv.inputs[1].default_value = WEIGHT
+w1 = node("ShaderNodeMath", "P10_w1", operation="MULTIPLY")
+L.new(wv.outputs[0], w1.inputs[0]); L.new(comp.outputs[0], w1.inputs[1])
 w2 = node("ShaderNodeMath", "P10_w2", operation="MULTIPLY", use_clamp=True)
-L.new(wv.outputs[0], w2.inputs[0]); L.new(comp.outputs[0], w2.inputs[1])
+L.new(w1.outputs[0], w2.inputs[0])
+# per-instance variation (lead decision (b), 2026-09-24): the 16 rotunda columns share ONE mesh and one atlas region.
+# A U shift around the shaft axis is not possible (the shaft's UVBake islands are Smart-UV charts, not one cylinder
+# strip), so each object gets (1) a value jitter of the map of +-3 % and (2) its own share of the map, 0.6-1.0 of
+# the weight, both from Object Info > Random -- on top of the procedural's existing per-instance weathering.  Logged
+# as an exception request in the round report.
+oi = node("ShaderNodeObjectInfo", "P10_objinfo")
+jit = node("ShaderNodeMath", "P10_jit", operation="MULTIPLY_ADD")
+L.new(oi.outputs["Random"], jit.inputs[0]); jit.inputs[1].default_value = 0.06; jit.inputs[2].default_value = 0.97
+xj = node("ShaderNodeVectorMath", "P10_xj", operation="SCALE")
+L.new(x2.outputs[0], xj.inputs[0]); L.new(jit.outputs[0], xj.inputs["Scale"])
+r2 = node("ShaderNodeMath", "P10_r2", operation="MULTIPLY"); L.new(oi.outputs["Random"], r2.inputs[0]); r2.inputs[1].default_value = 7.31
+fr = node("ShaderNodeMath", "P10_fr", operation="FRACT"); L.new(r2.outputs[0], fr.inputs[0])
+ws = node("ShaderNodeMath", "P10_ws", operation="MULTIPLY_ADD")
+L.new(fr.outputs[0], ws.inputs[0]); ws.inputs[1].default_value = 0.4; ws.inputs[2].default_value = 0.6
 mul = node("ShaderNodeVectorMath", "P10_mul", operation="MULTIPLY")
-L.new(src, mul.inputs[0]); L.new(x2.outputs[0], mul.inputs[1])
+L.new(src, mul.inputs[0]); L.new(xj.outputs[0], mul.inputs[1])
+L.new(ws.outputs[0], w2.inputs[1])
 mix = node("ShaderNodeMix", "P10_mix"); mix.data_type = "RGBA"
 a_in = next(s for s in mix.inputs if s.name == "A" and s.type == "RGBA")
 b_in = next(s for s in mix.inputs if s.name == "B" and s.type == "RGBA")

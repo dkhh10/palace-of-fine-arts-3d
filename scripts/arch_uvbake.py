@@ -14,14 +14,17 @@ Atlas groups: 0 attic, 1 entablature, 2 drum + columns, 3 the lagoon arch, each 
 Layout: see the comment block above `unwrap_ring` (sector x facing-class planar charts in metres for the rings,
 per-component front projection for the ornament courses, Smart UV Project rescaled to metres for the shared column /
 base meshes and the arch; every island scaled by its visibility weight; one CARDINAL-rotation CONCAVE pack per group).
-Measured 2026-09-24: hero-front (faces 07/00/01, columns) 89 / 102 / 131 / 277 texels per metre, fill 43 / 30 / 46 /
-13 % (the checkpoint's Smart-UV layout: 27 / 19 / 36 / 295).  200 texels/m is out of reach for the attic group in one
+Measured 2026-09-24 (quadrant layout, 7cdede75): hero-front (faces 07/00/01, columns) 43 / 50 / 64 / 136 texels per
+metre in the 2048 quadrants, fill 41 / 29 / 44 / 13 % (the checkpoint's Smart-UV layout: 27 / 19 / 36 / 295 in a whole
+4096 each).  The lead accepted the density (the registered photos resolve 16-40 px/m).  200 texels/m is out of reach for the attic group in one
 4096 atlas: its 741 m2 of weight-1 faces alone need 29.6 M texels at 200/m, the atlas has 16.8 M.
 
 Checks that fail the run (and block --save): texel overlap (rasterised pixel-centre coverage > 1 at 2048 per group,
 tolerance 0.05 % of covered texels for float ties on shared edges), UV outside 0..1, layer order / active / render
 flags, UVProj hash, vertex / face counts.  Prints texels per metre per group (target >= 200 on the lagoon side).
-Writes assets/textures/projection2/uvbake_groups.json (group -> object names) for mat_p10_meshdump.py.
+Writes assets/textures/projection2/uvbake_groups.json (group -> object names, for mat_p10_meshdump.py, plus `sha1`:
+mesh -> SHA-1 of its UVBake layer; a differing layout fails the run unless --write-hashes).  Exit code 1 on any
+failure (review part 1, finding 6).  `--dry` only resolves the objects and exits before every check.
 """
 import bpy, bmesh, sys, os, math, json, hashlib
 import numpy as np
@@ -35,14 +38,14 @@ UV = "UVBake"
 ATLAS = 4096
 BACK_SCALE = 0.25
 QUAD_INSET = 0.01
-MARGIN = 0.0012          # 5 px at 4096: the bleed the projection dilates into
+MARGIN = 0.0012          # of a group's own 0..1 layout before the quadrant remap: ~2.5 px at 2048 per quadrant
 SHAPE = args[args.index("--shape") + 1] if "--shape" in args else "CONCAVE"
 ROTM = args[args.index("--rot") + 1] if "--rot" in args else "CARDINAL"
 ANGLE = {1: 80.0}        # the entablature's egg / dentil / modillion courses: fewer, larger islands
 FACE_AZ0 = 82.0
 HERO_FACES = (0, 7, 1)
 OUT = common.ASSETS / "textures" / "projection2"
-OUT.mkdir(parents=True, exist_ok=True)
+(OUT / "work").mkdir(parents=True, exist_ok=True)
 
 attic = ["ARCH_rotunda_attic_base", "ARCH_rotunda_attic_cornice", "ARCH_rotunda_attic_roof"]
 for k in HERO_FACES:
@@ -452,7 +455,23 @@ for g, rl in reps.items():
           f"({100 * ovl / max(cov, 1):.3f} %) {'FAIL' if bad else 'OK'}; weight-1 (faces 07/00/01 front, columns) {a3f:.0f} m2 at "
           f"{tpm:.0f} texels/m (2048 quadrant of the {ATLAS} atlas)")
 
-json.dump({str(g): v["objects"] for g, v in report.items()}, open(OUT / "uvbake_groups.json", "w"), indent=1)
+# per-mesh SHA-1 of the UVBake layer: the committed atlases (PFA_p10_*.png) are only valid for this exact layout.
+# A run whose layout differs from the committed hashes is a FAILURE unless --write-hashes (then the projection must
+# be re-run).  arch_build.py's hook (lead) reads `fails` from the exec namespace and refuses to save when it is > 0.
+gpath = OUT / "uvbake_groups.json"
+committed = json.loads(gpath.read_text()).get("sha1", {}) if gpath.exists() else {}
+sha = {}
+for g, rl in reps.items():
+    for o in rl:
+        sha[o.data.name] = uv_hash(o.data, UV)
+changed = sorted(k for k in sha if committed and committed.get(k) != sha[k])
+if changed and "--write-hashes" not in args:
+    fails += 1
+    print(f"[uvbake] UVBake LAYOUT DIFFERS from the committed hashes on {len(changed)} mesh(es) {changed[:5]}: the "
+          f"projected atlases are stale (re-run the projection and pass --write-hashes)")
+gout = {str(g): v["objects"] for g, v in report.items()}
+gout["sha1"] = sha if (not committed or "--write-hashes" in args) else committed
+json.dump(gout, open(gpath, "w"), indent=1)
 json.dump(report, open(OUT / "work" / "uvbake_report.json", "w"), indent=1)
 if SAVE and not fails:
     common.save_blend(common.ASSETS / "architecture.blend")
@@ -460,3 +479,6 @@ if SAVE and not fails:
 elif SAVE:
     print(f"[uvbake] NOT SAVED: {fails} check(s) failed")
 print(f"[uvbake] done, {fails} failure(s)")
+_run_directly = "--python" in sys.argv and sys.argv[sys.argv.index("--python") + 1].endswith("arch_uvbake.py")
+if fails and _run_directly:                     # exec'd by arch_build.py: the hook reads `fails` instead
+    raise SystemExit(1)

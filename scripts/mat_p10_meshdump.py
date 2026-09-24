@@ -111,6 +111,8 @@ elif CMD == "uvbake":
     TP, TN, TU, TG, TO, names, mats, mat_owner = [], [], [], [], [], [], [], []
     mesh_index = {}
     for g, onames in groups.items():
+        if not g.isdigit():                    # "sha1"
+            continue
         for n in onames:
             o = bpy.data.objects.get(n)
             if o is None:
