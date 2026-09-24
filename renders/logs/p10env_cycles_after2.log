@@ -1,0 +1,10 @@
+00:00.485  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env/master.blend"
+05:51.119  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env/renders/previews/environment/p10_cycles_after2_cam01.png'
+[common] set_lod viewport=LOD1 render=LOD0: 6574 objects, 6 collections
+[light_presets] vault emitters for CYCLES: 2 lights, physical energy, no cutoff
+[light_presets] gallery fill for CYCLES: 16 strips at 1200 W, hidden in render: False
+[env_p10_cycles] p10_cycles_after2_cam01.png 32 spp in 350.7s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 11755 exited rc=0 after 352 s (max 900)
