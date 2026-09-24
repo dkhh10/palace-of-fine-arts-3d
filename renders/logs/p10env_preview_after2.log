@@ -1,0 +1,17 @@
+00:00.558  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env/master.blend"
+00:35.495  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env/renders/previews/environment/p10_after2_cam01.png'
+01:07.345  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env/renders/previews/environment/p10_after2_cam02.png'
+01:35.961  render           | Saved: '/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env/renders/previews/environment/p10_after2_cam05.png'
+[common] set_lod viewport=LOD1 render=LOD1: 6574 objects, 6 collections
+[light_presets] vault emitters for EEVEE: 2 lights, x6.0 + 21 m cutoff
+[light_presets] gallery fill for EEVEE: 16 strips at 0 W, hidden in render: True
+[env_p10_preview] opened /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-env/master.blend in 4.0s, tag=after2, cams=['01', '02', '05']
+[env_p10_preview] p10_after2_cam01.png in 31.1s
+[env_p10_preview] p10_after2_cam02.png in 31.8s
+[env_p10_preview] p10_after2_cam05.png in 28.6s
+[env_p10_preview] done in 95.4s
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+Error: Not freed memory blocks: 1, total unfreed memory 0.062584 MB
+blender_run.sh: pid 11475 exited rc=0 after 97 s (max 900)
