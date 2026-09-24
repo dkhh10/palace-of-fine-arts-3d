@@ -1185,3 +1185,10 @@ would be empty upsampling. Decision (b): the 16 shared-mesh columns get per-inst
 column axis via Object Info Random, plus the existing per-instance weathering); a hue/value jitter <= 0.03 with a logged exception only if that is not cheap.
 Merge hook (lead, at merge time): arch_build.py execs arch_uvbake.py after arch_uvproj.py and before the save, refuses to save on `fails` != 0, and
 compares the per-mesh UVBake hash the script writes into uvbake_groups.json.
+
+## 2026-09-24 · Phase 10 ENV r2 merged (lead; review docs/reviews/phase10_env_r2_review.md MERGE WITH FIXES, both fix-nows closed)
+The brief's premise was wrong: ref 169's willow is low and broad (crown top 5.1 m), so the hero-shore willow went DOWN to 5.4 m and 1.7x wide at (4.4, 43.4)
+(box own-pixels 19.1 % / top row 607 vs ref 21.7 % / 604), an added willow fills the pale-crown slot at (7.9, 42.6), and the second hero-shore willow went
+8.5 -> 4.0 m so the central arch opening is uncovered (2,065 -> 0 px). Fix-now 2 by census: willow_03 trunk 43.6 m from the centre, worst-case crown reach
+36.7 m vs the 37 m podium ring, a 0.3 m intrusion into a plan margin with 0 px on the drum or arch: accepted, carried. Carried: shadow / frame gates size crowns
+at CROWN_R while the real crown is 2.4x that (hero-shore shade 18 %, lower bound); the widening is keyed on the note text. Tris vs r1 +0.9 / +1.3 / +0.5 %.
