@@ -7,8 +7,8 @@
 list     print every ARCH mesh object near the rotunda (name, verts, polys, uv layers, radius / z range)
 samples  work/arch_samples.npz: area-weighted surface samples (world xyz + normal + object id) of the rotunda's
          LOD0/unsuffixed ARCH meshes -- the ICP target of step 2 -- plus world triangles for the edge renders
-uvbake   work/uvbake_tris.npz: for every mesh carrying `UVBake`, world triangles, per-corner UVBake coords, the
-         per-corner normal and the atlas group of the object (steps 4 and 6 rasterise these in numpy)
+uvbake   work/uvbake_tris.npz: for every mesh carrying `UVBake`, LOCAL triangles, per-corner UVBake coords, the
+         per-corner normal, the atlas group, and every instance's world matrix (mats / mat_owner) (steps 4 and 6 rasterise these in numpy)
 """
 import bpy, sys, os, math, json
 import numpy as np
@@ -104,20 +104,37 @@ elif CMD == "samples":
           f"{sum(len(p) for p in TP)} triangles")
 
 elif CMD == "uvbake":
+    # LOCAL triangles once per mesh + every instance's world matrix (the 16 columns share one mesh and one atlas
+    # region; the projection takes all instances).  Objects sharing a mesh with an identical matrix (LOD0 / LOD1 of
+    # one course) count once.
     groups = json.loads((WORK.parent / "uvbake_groups.json").read_text())
-    TP, TN, TU, TG, TO, names = [], [], [], [], [], []
-    seen = set()
+    TP, TN, TU, TG, TO, names, mats, mat_owner = [], [], [], [], [], [], [], []
+    mesh_index = {}
     for g, onames in groups.items():
         for n in onames:
             o = bpy.data.objects.get(n)
-            if o is None or o.data.name in seen:
+            if o is None:
                 continue
-            seen.add(o.data.name)
-            if "UVBake" not in o.data.uv_layers:
-                raise SystemExit(f"[p10dump] {n} has no UVBake")
-            P, N, UV = tri_arrays(o, "UVBake")
-            TP.append(P); TN.append(N); TU.append(UV)
-            TG.append(np.full(len(P), int(g))); TO.append(np.full(len(P), len(names))); names.append(n)
+            mw = np.array(world_matrix(o), dtype=np.float64)
+            if o.data.name not in mesh_index:
+                if "UVBake" not in o.data.uv_layers:
+                    raise SystemExit(f"[p10dump] {n} has no UVBake")
+                me = o.data
+                me.calc_loop_triangles()
+                nt = len(me.loop_triangles)
+                vi = np.zeros(nt * 3, np.int32); me.loop_triangles.foreach_get("vertices", vi)
+                li = np.zeros(nt * 3, np.int32); me.loop_triangles.foreach_get("loops", li)
+                co = np.zeros(len(me.vertices) * 3, np.float32); me.vertices.foreach_get("co", co)
+                ln = np.zeros(len(me.loops) * 3, np.float32); me.corner_normals.foreach_get("vector", ln)
+                uv = np.zeros(len(me.loops) * 2, np.float32); me.uv_layers["UVBake"].data.foreach_get("uv", uv)
+                mesh_index[me.name] = len(names)
+                TP.append(co.reshape(-1, 3)[vi].reshape(nt, 3, 3)); TN.append(ln.reshape(-1, 3)[li].reshape(nt, 3, 3))
+                TU.append(uv.reshape(-1, 2)[li].reshape(nt, 3, 2))
+                TG.append(np.full(nt, int(g))); TO.append(np.full(nt, len(names))); names.append(me.name)
+            k = mesh_index[o.data.name]
+            if not any(mo == k and np.allclose(m, mw) for m, mo in zip(mats, mat_owner)):
+                mats.append(mw); mat_owner.append(k)
     np.savez_compressed(WORK / "uvbake_tris.npz", P=np.concatenate(TP), N=np.concatenate(TN),
-                        UV=np.concatenate(TU), G=np.concatenate(TG), O=np.concatenate(TO), names=np.array(names))
-    print(f"[p10dump] uvbake: {sum(len(p) for p in TP)} triangles on {len(names)} meshes")
+                        UV=np.concatenate(TU), G=np.concatenate(TG), O=np.concatenate(TO), names=np.array(names),
+                        mats=np.array(mats), mat_owner=np.array(mat_owner))
+    print(f"[p10dump] uvbake: {sum(len(p) for p in TP)} local triangles on {len(names)} meshes, {len(mats)} instances")
