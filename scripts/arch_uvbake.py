@@ -9,7 +9,8 @@ checked unchanged.  Objects that share a mesh (the LOD0/LOD1 courses, the 16 rot
 get the layer once, on the shared mesh -- so the 16 columns share ONE atlas region: the projection fills it with the
 median over every registered view of every visible column (docs/materials_notes.md, Phase 10 r1).
 
-Atlas groups (one 4096 atlas each, UV 0..1):  0 attic, 1 entablature, 2 drum + columns, 3 the lagoon arch.
+Atlas groups: 0 attic, 1 entablature, 2 drum + columns, 3 the lagoon arch, each packed into one 2048 QUADRANT
+(g % 2, g // 2) of a single shared 4096 atlas (so one image node serves every material), inset 1 %.
 Layout: see the comment block above `unwrap_ring` (sector x facing-class planar charts in metres for the rings,
 per-component front projection for the ornament courses, Smart UV Project rescaled to metres for the shared column /
 base meshes and the arch; every island scaled by its visibility weight; one CARDINAL-rotation CONCAVE pack per group).
@@ -33,6 +34,7 @@ SAVE = "--save" in args
 UV = "UVBake"
 ATLAS = 4096
 BACK_SCALE = 0.25
+QUAD_INSET = 0.01
 MARGIN = 0.0012          # 5 px at 4096: the bleed the projection dilates into
 SHAPE = args[args.index("--shape") + 1] if "--shape" in args else "CONCAVE"
 ROTM = args[args.index("--rot") + 1] if "--rot" in args else "CARDINAL"
@@ -348,6 +350,14 @@ for g, rl in reps.items():
     bpy.ops.uv.select_all(action="SELECT")
     bpy.ops.uv.pack_islands(rotate=True, scale=True, margin_method="FRACTION", margin=MARGIN, shape_method=SHAPE, rotate_method=ROTM)
     bpy.ops.object.mode_set(mode="OBJECT")
+    # one shared 4096 atlas image: group g -> quadrant (g % 2, g // 2), inset by QUAD_INSET so the atlas corner
+    # (0, 0) -- where a mesh WITHOUT UVBake samples -- is empty (confidence 0 there, procedural fallback).
+    qx, qy = g % 2, g // 2
+    for o in rl:
+        uvl = o.data.uv_layers[UV]
+        a = np.zeros(len(o.data.loops) * 2); uvl.data.foreach_get("uv", a); a = a.reshape(-1, 2)
+        a = (np.array([qx, qy]) + QUAD_INSET + (1.0 - 2 * QUAD_INSET) * a) / 2.0
+        uvl.data.foreach_set("uv", a.ravel())
     for o in rl:
         o.select_set(False)
         me = o.data
@@ -423,11 +433,16 @@ for g, rl in reps.items():
             print(f"[uvbake] UV OUTSIDE 0..1 on {me.name}")
         TU.append(uvt)
     TU = np.concatenate(TU)
+    qx, qy = g % 2, g // 2
+    TU = TU * 2.0 - np.array([qx, qy])                      # the group's quadrant back to 0..1
+    if (TU < -1e-6).any() or (TU > 1 + 1e-6).any():
+        fails += 1
+        print(f"[uvbake] group {g} leaves its quadrant")
     cnt = raster_count(TU, RES_CHK)
     np.save(OUT / "work" / f"uvcov_{g}.npy", np.packbits(cnt > 0))
     cov = (cnt > 0).sum(); ovl = (cnt > 1).sum()
     a3f = sum(d[0] for d in dens); a2f = sum(d[1] for d in dens)
-    tpm = math.sqrt(a2f * ATLAS * ATLAS / a3f) if a3f > 0 else 0.0
+    tpm = math.sqrt(a2f * ATLAS * ATLAS / a3f)       # shared 4096 atlas units = the 2048 quadrant if a3f > 0 else 0.0
     bad = ovl > 0.0005 * cov
     fails += bad
     report[g] = dict(objects=names_out[g], meshes=[o.data.name for o in rl], triangles=int(len(TU)),
@@ -435,7 +450,7 @@ for g, rl in reps.items():
                      texels_per_m_front=tpm, front_area_m2=a3f)
     print(f"[uvbake] group {g}: tris {len(TU)} atlas fill {100 * cov / RES_CHK ** 2:.1f} % overlap texels {ovl} "
           f"({100 * ovl / max(cov, 1):.3f} %) {'FAIL' if bad else 'OK'}; weight-1 (faces 07/00/01 front, columns) {a3f:.0f} m2 at "
-          f"{tpm:.0f} texels/m @ {ATLAS}")
+          f"{tpm:.0f} texels/m (2048 quadrant of the {ATLAS} atlas)")
 
 json.dump({str(g): v["objects"] for g, v in report.items()}, open(OUT / "uvbake_groups.json", "w"), indent=1)
 json.dump(report, open(OUT / "work" / "uvbake_report.json", "w"), indent=1)

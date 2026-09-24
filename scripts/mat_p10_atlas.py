@@ -3,6 +3,7 @@
     .venv-p10/bin/python scripts/mat_p10_atlas.py [--res 2048]
 
 Input work/uvbake_tris.npz (mat_p10_meshdump.py uvbake: local triangles, UVBake corners, corner normals, instances).
+Each group is one 2048 quadrant (g % 2, g // 2) of the shared 4096 atlas (arch_uvbake.py).
 Output work/atlas_g<g>.npz: mesh (res,res) int16 (-1 = empty), lpos / lnrm (res,res,3) float32 in the mesh's LOCAL
 space (texel centre, barycentric; normals from the corner normals).  World positions are per instance
 (uvbake_tris.npz mats): the 16 columns share one region.  This is the brief's Cycles position / normal bake done
@@ -53,7 +54,8 @@ if __name__ == "__main__":
     for g in np.unique(d["G"]):
         t0 = time.time()
         m = d["G"] == g
-        mesh, lpos, lnrm = raster(d["P"][m], d["N"][m], d["UV"][m], d["O"][m], RES)
+        uvq = d["UV"][m] * 2.0 - np.array([g % 2, g // 2])     # the group's quadrant of the shared atlas -> 0..1
+        mesh, lpos, lnrm = raster(d["P"][m], d["N"][m], uvq, d["O"][m], RES)
         np.savez_compressed(C.WORK / f"atlas_g{g}.npz", mesh=mesh, lpos=lpos, lnrm=lnrm, res=RES)
         print(f"[atlas] group {g}: {m.sum()} triangles, fill {100 * (mesh >= 0).mean():.1f} % at {RES}, "
               f"{time.time() - t0:.0f} s")
