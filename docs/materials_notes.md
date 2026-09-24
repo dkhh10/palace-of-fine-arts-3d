@@ -2090,7 +2090,7 @@ clamp, `Base Normal Z` 0.52, dielectric specular; `MAT_plaster_ceiling` and `...
   `SWEEPS = {...}` selected by `--sweep`; (6) `mat_r10_measure.py`'s `REF083` hard-codes the main-checkout path
   -- use `common.REFERENCE_DIR`.
 
-## Checkpoint 2026-09-24 (Phase 10 r1 projection engineer, stopped on the lead's order; brief docs/briefs/phase10_projection.md)
+## Checkpoint 2026-09-24 (Phase 10 r1 projection engineer, stopped on the lead's order; brief docs/briefs/phase10_projection.md) -- SUPERSEDED by "Phase 10 r1" below
 
 Environment: `uv venv --python 3.12 .venv-p10` in the worktree (gitignored) with pycolmap numpy pillow scipy
 opencv-python-headless OpenEXR matplotlib. Work files (gitignored, regenerable) in `assets/textures/projection2/work/`.
