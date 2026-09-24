@@ -1,7 +1,8 @@
 """Phase 10 r1, steps 2 and 5 -- per-camera world-position / normal passes from the registered photo cameras.
 
     scripts/blender_run.sh 1800 -- --background <file.blend> --python scripts/mat_p10_depth.py -- \
-        --out <dir> [--cams 10,31,67] [--scale 0.5] [--arch-only]
+        --out <dir> [--cams 10,31,67] [--scale 0.5] [--arch-only] [--clip 12] [--hide ENV_backdrop,ENV_terrain]   (clip: skip the terrain / ENV
+        within 12 m of a registered camera that sits a few decimetres under ENV's ground)
 
 Reads assets/textures/projection2/cameras.json (world K, R, t per image). For every camera: a Blender pinhole camera
 (COLMAP SIMPLE_RADIAL radial term is NOT rendered; the numpy side applies k1 when it maps render pixels to photo
@@ -36,6 +37,10 @@ if "--arch-only" in args:
     for o in scene.objects:
         if o.name not in arch:
             o.hide_render = True
+HIDE = [h for h in arg("--hide", "").split(",") if h]
+for o in scene.objects:                       # e.g. ENV_backdrop,ENV_terrain: several registered cameras stand inside
+    if any(o.name.startswith(h) for h in HIDE):   # ENV's backdrop houses / canopy on the east shore (ray probe)
+        o.hide_render = True
 for o in scene.objects:                       # water / glass / volumes must not stop the position ray
     if o.type == "MESH" and ("water" in o.name.lower() or "lagoon" in o.name.lower()) and not o.name.startswith("ARCH"):
         o.hide_render = True
@@ -77,7 +82,7 @@ for k, c in todo:
     cd.lens = f * sw / big
     cd.shift_x = -(cx - w / 2) / big
     cd.shift_y = (cy - h / 2) / big
-    cd.clip_start, cd.clip_end = 0.5, 5000.0
+    cd.clip_start, cd.clip_end = float(arg("--clip", "0.5")), 5000.0
     R = Matrix(c["R"])
     Rc2w = R.transposed() @ flip
     M = Rc2w.to_4x4(); M.translation = c["centre"]
