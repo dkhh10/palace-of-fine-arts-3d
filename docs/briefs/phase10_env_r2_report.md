@@ -22,4 +22,4 @@ Acceptance: own share is 4.0 points below ref (limit 10). Crown top is 3 px belo
 - **The second hero-shore willow (-2.6,45.9)** was not moved (not in this brief). It covers 2,065 px of the hero arch aperture (rows 561-614, x 882-936, 712 px of them seen straight through). It also fills 23.5 % of the box, where ref shows only the urn and pedestal.
 - **Leaf colour hand-off (materials, still open).** Both crowns read as dark hedge in Cycles.
 - **Shadow gates.** `shadow_relief` and `_frame_box` still use CROWN_R, not the widened crown (review carry 4).
-Sheet: renders/qa_comparisons/env_p10r2_sheet.png. Last commit: see `git log phase10-env2`.
+Sheet: renders/qa_comparisons/env_p10r2_sheet.png. Last commit: 9e43109 (report commit follows).
