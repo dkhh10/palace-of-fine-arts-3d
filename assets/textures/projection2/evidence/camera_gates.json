@@ -1,0 +1,856 @@
+{
+ "summary": {
+  "cameras": 71,
+  "in_lagoon": 28,
+  "behind_shore": 40,
+  "used_before": 24,
+  "dropped_from_used": 22,
+  "used_after": 2,
+  "dropped": [
+   [
+    "ref_014",
+    140.9,
+    117.1,
+    "behind"
+   ],
+   [
+    "ref_017",
+    69.9,
+    108.6,
+    "lagoon"
+   ],
+   [
+    "ref_023",
+    133.1,
+    115.6,
+    "behind"
+   ],
+   [
+    "ref_024",
+    146.7,
+    115.8,
+    "behind"
+   ],
+   [
+    "ref_035",
+    133.8,
+    117.1,
+    "behind"
+   ],
+   [
+    "ref_058",
+    48.9,
+    108.6,
+    "lagoon"
+   ],
+   [
+    "ref_064",
+    77.3,
+    117.1,
+    "lagoon"
+   ],
+   [
+    "ref_067",
+    69.9,
+    98.6,
+    "lagoon"
+   ],
+   [
+    "ref_078",
+    144.5,
+    108.7,
+    "behind"
+   ],
+   [
+    "ref_087",
+    115.9,
+    96.9,
+    "behind"
+   ],
+   [
+    "ref_089",
+    153.3,
+    96.5,
+    "behind"
+   ],
+   [
+    "ref_090",
+    64.5,
+    108.6,
+    "lagoon"
+   ],
+   [
+    "ref_098",
+    135.9,
+    115.4,
+    "behind"
+   ],
+   [
+    "ref_140",
+    141.7,
+    98.4,
+    "behind"
+   ],
+   [
+    "ref_141",
+    155.5,
+    117.2,
+    "behind"
+   ],
+   [
+    "ref_145",
+    176.0,
+    97.1,
+    "behind"
+   ],
+   [
+    "ref_148",
+    173.1,
+    97.8,
+    "behind"
+   ],
+   [
+    "ref_156",
+    173.3,
+    97.9,
+    "behind"
+   ],
+   [
+    "ref_171",
+    183.5,
+    97.7,
+    "behind"
+   ],
+   [
+    "ref_174",
+    136.8,
+    116.5,
+    "behind"
+   ],
+   [
+    "ref_175",
+    136.7,
+    116.5,
+    "behind"
+   ],
+   [
+    "ref_177",
+    140.8,
+    117.1,
+    "behind"
+   ]
+  ]
+ },
+ "cameras": [
+  {
+   "file": "ref_009_rotunda_Palace_of_Fine_Arts_San_Francisco.jpg",
+   "r": 162.1,
+   "z": 2.45,
+   "in_lagoon": false,
+   "shore_r": 96.5,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_011_rotunda_Palace_of_Fine_Arts_March_2018_1460.jpg",
+   "r": 136.7,
+   "z": 2.76,
+   "in_lagoon": false,
+   "shore_r": 116.5,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_012_rotunda_Palace_of_Fine_Arts_March_2018_1470.jpg",
+   "r": 136.8,
+   "z": 2.75,
+   "in_lagoon": false,
+   "shore_r": 116.4,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_013_rotunda_Palace_of_Fine_Arts_March_2018_1484.jpg",
+   "r": 140.9,
+   "z": 2.6,
+   "in_lagoon": false,
+   "shore_r": 117.1,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_014_rotunda_Palace_of_Fine_Arts_March_2018_1486.jpg",
+   "r": 140.9,
+   "z": 2.63,
+   "in_lagoon": false,
+   "shore_r": 117.1,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_015_rotunda_Palace_of_Fine_Arts_March_2018_1488.jpg",
+   "r": 139.5,
+   "z": 2.66,
+   "in_lagoon": false,
+   "shore_r": 117.1,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_016_rotunda_Palace_of_Fine_Arts_March_2018_1529.jpg",
+   "r": 76.0,
+   "z": 1.97,
+   "in_lagoon": true,
+   "shore_r": 97.3,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_017_rotunda_Palace_of_Fine_Arts_March_2018_1539.jpg",
+   "r": 69.9,
+   "z": 2.7,
+   "in_lagoon": true,
+   "shore_r": 108.6,
+   "behind_shore": false,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_018_rotunda_Palace_of_Fine_Arts_March_2018_1545.jpg",
+   "r": 61.7,
+   "z": 0.4,
+   "in_lagoon": true,
+   "shore_r": 111.3,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_021_rotunda_Palace_of_Fine_Arts_panoramio_2.jpg",
+   "r": 52.8,
+   "z": 1.92,
+   "in_lagoon": true,
+   "shore_r": 108.7,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_022_rotunda_Palace_of_Fine_Arts_02.jpg",
+   "r": 147.0,
+   "z": 1.07,
+   "in_lagoon": false,
+   "shore_r": 108.7,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_023_rotunda_Palace_of_Fine_Arts_03.jpg",
+   "r": 133.1,
+   "z": 0.03,
+   "in_lagoon": false,
+   "shore_r": 115.6,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_024_rotunda_Palace_of_Fine_Arts_08.jpg",
+   "r": 146.7,
+   "z": 0.26,
+   "in_lagoon": false,
+   "shore_r": 115.8,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_025_rotunda_Palace_of_Fine_Arts_09.jpg",
+   "r": 75.0,
+   "z": 2.36,
+   "in_lagoon": true,
+   "shore_r": 122.6,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_027_rotunda_Palace_of_Fine_Arts_2012_04.jpg",
+   "r": 148.7,
+   "z": 1.36,
+   "in_lagoon": false,
+   "shore_r": 108.6,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_033_rotunda_Palace_of_Fine_Arts_Sa_Francisco_July16.jpg",
+   "r": 146.4,
+   "z": 0.69,
+   "in_lagoon": false,
+   "shore_r": 109.2,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_034_rotunda_Palace_of_Fine_Arts_San_Francisco_December_2021.jpg",
+   "r": 79.8,
+   "z": 1.6,
+   "in_lagoon": true,
+   "shore_r": 115.8,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_035_rotunda_Palace_of_Fine_Arts_Theatre_in_San_Francisco.jpg",
+   "r": 133.8,
+   "z": -0.37,
+   "in_lagoon": false,
+   "shore_r": 117.1,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_039_rotunda_Palace_of_Fine_Arts_Presidio_San_Francisco.jpg",
+   "r": 162.0,
+   "z": 2.46,
+   "in_lagoon": false,
+   "shore_r": 96.5,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_041_rotunda_Palace_of_Fine_Arts_San_Francisco_16669848394.jpg",
+   "r": 73.7,
+   "z": 2.21,
+   "in_lagoon": true,
+   "shore_r": 123.0,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_057_rotunda_Palace_of_Fine_Arts_29.jpg",
+   "r": 49.0,
+   "z": 1.83,
+   "in_lagoon": true,
+   "shore_r": 108.7,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_058_rotunda_Palace_of_Fine_Arts_30.jpg",
+   "r": 48.9,
+   "z": 1.9,
+   "in_lagoon": true,
+   "shore_r": 108.6,
+   "behind_shore": false,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_059_rotunda_Palace_of_Fine_Arts_31.jpg",
+   "r": 48.9,
+   "z": 1.87,
+   "in_lagoon": true,
+   "shore_r": 108.6,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_060_rotunda_Palace_of_Fine_Arts_33.jpg",
+   "r": 48.7,
+   "z": 2.1,
+   "in_lagoon": true,
+   "shore_r": 108.7,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_062_rotunda_Palace_of_Fine_Arts_View_of_Rotunda_from_north_eas.jpg",
+   "r": 62.6,
+   "z": 2.09,
+   "in_lagoon": true,
+   "shore_r": 108.3,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_063_rotunda_Palace_of_Fine_Arts_View_of_Rotunda_from_south_eas.jpg",
+   "r": 74.2,
+   "z": 2.25,
+   "in_lagoon": true,
+   "shore_r": 122.7,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_064_rotunda_Palace_of_fine_arts_2006.jpg",
+   "r": 77.3,
+   "z": 0.43,
+   "in_lagoon": true,
+   "shore_r": 117.1,
+   "behind_shore": false,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_065_rotunda_Palace_of_fine_arts_in_San_Francisco.jpg",
+   "r": 110.4,
+   "z": 0.33,
+   "in_lagoon": true,
+   "shore_r": 116.8,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_066_rotunda_Palace_of_fine_arts_20180504.jpg",
+   "r": 77.0,
+   "z": 2.13,
+   "in_lagoon": true,
+   "shore_r": 102.4,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_067_rotunda_Palacio_de_Finas_Artes_San_Francisco.jpg",
+   "r": 69.9,
+   "z": 4.64,
+   "in_lagoon": true,
+   "shore_r": 98.6,
+   "behind_shore": false,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_070_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg",
+   "r": 181.6,
+   "z": 3.96,
+   "in_lagoon": false,
+   "shore_r": 96.6,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_071_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg",
+   "r": 182.1,
+   "z": 3.99,
+   "in_lagoon": false,
+   "shore_r": 96.6,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_072_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg",
+   "r": 73.8,
+   "z": 2.43,
+   "in_lagoon": true,
+   "shore_r": 122.9,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_078_rotunda_San_Francisco_34615450294.jpg",
+   "r": 144.5,
+   "z": 0.84,
+   "in_lagoon": false,
+   "shore_r": 108.7,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_079_rotunda_San_Francisco_34647319243.jpg",
+   "r": 64.9,
+   "z": 1.85,
+   "in_lagoon": true,
+   "shore_r": 108.6,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_085_rotunda_San_Francisco_CA_USA_Palace_of_Fine_Arts_2022_0921.jpg",
+   "r": 126.2,
+   "z": 3.68,
+   "in_lagoon": false,
+   "shore_r": 116.8,
+   "behind_shore": false,
+   "used_before": true,
+   "usable_land": true
+  },
+  {
+   "file": "ref_086_rotunda_San_Francisco_Palace_Of_Fine_Art.jpg",
+   "r": 188.0,
+   "z": -0.66,
+   "in_lagoon": false,
+   "shore_r": 108.8,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_087_rotunda_San_Francisco_Palace_of_Fine_Arts_with_Trees_01.jpg",
+   "r": 115.9,
+   "z": 0.84,
+   "in_lagoon": false,
+   "shore_r": 96.9,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_088_rotunda_San_Francisco_California3920.jpg",
+   "r": 48.0,
+   "z": 1.79,
+   "in_lagoon": true,
+   "shore_r": 99.6,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_089_rotunda_Sf_exploratorium.jpg",
+   "r": 153.3,
+   "z": 1.81,
+   "in_lagoon": false,
+   "shore_r": 96.5,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_090_rotunda_The_Palace_of_Fine_Arts_San_Francisco_2013.jpg",
+   "r": 64.5,
+   "z": 1.94,
+   "in_lagoon": true,
+   "shore_r": 108.6,
+   "behind_shore": false,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_091_rotunda_The_Palace_of_Fine_Arts_and_its_lagoon_in_San_Fran.jpg",
+   "r": 82.6,
+   "z": 2.75,
+   "in_lagoon": true,
+   "shore_r": 121.4,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_093_rotunda_The_rotunda_of_the_Palace_of_Fine_Arts_San_Francis.jpg",
+   "r": 62.7,
+   "z": 2.23,
+   "in_lagoon": true,
+   "shore_r": 108.8,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_095_rotunda_US_CA_San_Francisco_North_America_The_West_4889277.jpg",
+   "r": 122.7,
+   "z": 0.94,
+   "in_lagoon": false,
+   "shore_r": 114.1,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": true
+  },
+  {
+   "file": "ref_098_main_2016_09_25_Palace_of_Fine_Arts_San_Francisco_NRHP.jpg",
+   "r": 135.9,
+   "z": -0.29,
+   "in_lagoon": false,
+   "shore_r": 115.4,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_099_main_2016_09_25_Palace_of_Fine_Arts_and_fountain_San_Fr.jpg",
+   "r": 150.1,
+   "z": 1.22,
+   "in_lagoon": false,
+   "shore_r": 108.4,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_128_main_Corinthian_columns_and_rotunda_Palace_of_Fine_Arts.jpg",
+   "r": 83.0,
+   "z": 1.15,
+   "in_lagoon": true,
+   "shore_r": 112.9,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_133_main_Exploratorium_dyeclan_com_panoramio.jpg",
+   "r": 145.4,
+   "z": 1.13,
+   "in_lagoon": false,
+   "shore_r": 108.6,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_135_main_Fountain_322090800.jpg",
+   "r": 149.2,
+   "z": 0.07,
+   "in_lagoon": false,
+   "shore_r": 108.8,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_139_main_Gushing_lagoon_Palace_of_Fine_Arts_San_Francisco_4.jpg",
+   "r": 150.1,
+   "z": 1.69,
+   "in_lagoon": false,
+   "shore_r": 97.3,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_140_main_Gushing_lagoon_Palace_of_Fine_Arts_San_Francisco.jpg",
+   "r": 141.7,
+   "z": 1.66,
+   "in_lagoon": false,
+   "shore_r": 98.4,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_141_main_Heritage_Art_Museum_in_California.jpg",
+   "r": 155.5,
+   "z": 2.12,
+   "in_lagoon": false,
+   "shore_r": 117.2,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_144_main_Lagoon_Palace_of_Fine_Arts_San_Francisco_CA_DSC024.jpg",
+   "r": 180.5,
+   "z": 4.56,
+   "in_lagoon": false,
+   "shore_r": 96.9,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_145_main_Lagoon_Palace_of_Fine_Arts_San_Francisco_CA_DSC024.jpg",
+   "r": 176.0,
+   "z": 4.8,
+   "in_lagoon": false,
+   "shore_r": 97.1,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_148_main_Marina_District_San_Francisco_CA_USA_panoramio_10.jpg",
+   "r": 173.1,
+   "z": 4.94,
+   "in_lagoon": false,
+   "shore_r": 97.8,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_149_main_Marina_District_San_Francisco_CA_USA_panoramio_12.jpg",
+   "r": 52.9,
+   "z": 2.23,
+   "in_lagoon": true,
+   "shore_r": 98.2,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_150_main_Marina_District_San_Francisco_CA_USA_panoramio_2.jpg",
+   "r": 556.7,
+   "z": -86.85,
+   "in_lagoon": false,
+   "shore_r": 96.8,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_151_main_Marina_District_San_Francisco_CA_USA_panoramio_3.jpg",
+   "r": 80.4,
+   "z": 2.5,
+   "in_lagoon": true,
+   "shore_r": 122.5,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_152_main_Marina_District_San_Francisco_CA_USA_panoramio_4.jpg",
+   "r": 144.7,
+   "z": 1.37,
+   "in_lagoon": false,
+   "shore_r": 107.8,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_154_main_Marina_District_San_Francisco_CA_USA_panoramio_6.jpg",
+   "r": 74.1,
+   "z": 2.32,
+   "in_lagoon": true,
+   "shore_r": 122.8,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_156_main_Marina_District_San_Francisco_CA_USA_panoramio_8.jpg",
+   "r": 173.3,
+   "z": 4.93,
+   "in_lagoon": false,
+   "shore_r": 97.9,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_158_main_Marina_District_San_Francisco_CA_USA_panoramio.jpg",
+   "r": 77.0,
+   "z": 2.05,
+   "in_lagoon": true,
+   "shore_r": 101.7,
+   "behind_shore": false,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_161_main_Maybeck_Fine_Arts_Palace_3.jpg",
+   "r": 35.4,
+   "z": 4.19,
+   "in_lagoon": false,
+   "shore_r": 132.4,
+   "behind_shore": false,
+   "used_before": true,
+   "usable_land": true
+  },
+  {
+   "file": "ref_164_main_PALACE_OF_FINE_ARTS.jpg",
+   "r": 149.2,
+   "z": 1.59,
+   "in_lagoon": false,
+   "shore_r": 96.8,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_169_main_Palace_of_Fine_Arts_16794p.jpg",
+   "r": 159.8,
+   "z": 5.18,
+   "in_lagoon": false,
+   "shore_r": 109.2,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_170_main_Palace_of_Fine_Arts_322090718.jpg",
+   "r": 150.9,
+   "z": 2.3,
+   "in_lagoon": false,
+   "shore_r": 112.5,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_171_main_Palace_of_Fine_Arts_9331688296.jpg",
+   "r": 183.5,
+   "z": 3.88,
+   "in_lagoon": false,
+   "shore_r": 97.7,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_174_main_Palace_of_Fine_Arts_March_2018_1464.jpg",
+   "r": 136.8,
+   "z": 2.76,
+   "in_lagoon": false,
+   "shore_r": 116.5,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_175_main_Palace_of_Fine_Arts_March_2018_1468.jpg",
+   "r": 136.7,
+   "z": 2.77,
+   "in_lagoon": false,
+   "shore_r": 116.5,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  },
+  {
+   "file": "ref_176_main_Palace_of_Fine_Arts_March_2018_1476.jpg",
+   "r": 136.6,
+   "z": 2.84,
+   "in_lagoon": false,
+   "shore_r": 116.4,
+   "behind_shore": true,
+   "used_before": false,
+   "usable_land": false
+  },
+  {
+   "file": "ref_177_main_Palace_of_Fine_Arts_March_2018_1480.jpg",
+   "r": 140.8,
+   "z": 2.63,
+   "in_lagoon": false,
+   "shore_r": 117.1,
+   "behind_shore": true,
+   "used_before": true,
+   "usable_land": false
+  }
+ ]
+}

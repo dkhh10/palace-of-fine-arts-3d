@@ -122,3 +122,7 @@ docs/usage/turns_all.json
 .wrangler/
 renders/logs/*.jsonl
 docs/recon_probe/sparse/
+
+# Phase 10 projection (regenerable)
+.venv-p10/
+assets/textures/projection2/work/

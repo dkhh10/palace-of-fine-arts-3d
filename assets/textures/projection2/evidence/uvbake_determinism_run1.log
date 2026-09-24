@@ -1,0 +1,51 @@
+00:00.352  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-proj/assets/architecture.blend"
+[uvbake] group 0: 24 objects, 24 meshes
+[uvbake] group 1: 6 objects, 4 meshes
+[uvbake] group 2: 51 objects, 6 meshes
+[uvbake] group 3: 3 objects, 3 meshes
+[uvbake]   ARCH_rotunda_attic_base                  ring     islands    56 faces weight-1 37/224 classes {'F': 96, 'D': 32, 'U': 96}
+[uvbake]   ARCH_rotunda_attic_cornice               ring     islands   104 faces weight-1 75/384 classes {'F': 208, 'D': 96, 'S': 48, 'U': 32}
+[uvbake]   ARCH_rotunda_attic_roof                  ring     islands    32 faces weight-1 3/216 classes {'F': 8, 'D': 72, 'U': 72, 'B': 64}
+[uvbake]   ARCH_rotunda_attic_panel_00              ring     islands     6 faces weight-1 2/8 classes {'F': 2, 'D': 1, 'S': 2, 'U': 1, 'B': 2}
+[uvbake]   ARCH_rotunda_attic_frame_00              ring     islands    10 faces weight-1 8/24 classes {'F': 8, 'D': 2, 'S': 4, 'U': 2, 'B': 8}
+[uvbake]   ARCH_rotunda_attic_niche_00              ring     islands     8 faces weight-1 10/24 classes {'F': 10, 'D': 2, 'U': 2, 'B': 10}
+[uvbake]   ARCH_rotunda_attic_pilaster_00_a         ring     islands     4 faces weight-1 2/6 classes {'F': 2, 'D': 1, 'U': 1, 'B': 2}
+[uvbake]   ARCH_rotunda_attic_pilaster_00_b         ring     islands     4 faces weight-1 2/6 classes {'F': 2, 'D': 1, 'U': 1, 'B': 2}
+[uvbake]   ARCH_rotunda_attic_corner_00             ring     islands     5 faces weight-1 3/6 classes {'F': 3, 'D': 1, 'U': 1, 'B': 1}
+[uvbake]   ARCH_rotunda_attic_corner_cap_00         ring     islands     5 faces weight-1 3/6 classes {'F': 3, 'D': 1, 'U': 1, 'B': 1}
+[uvbake]   ARCH_rotunda_attic_panel_07              ring     islands     6 faces weight-1 2/8 classes {'F': 2, 'D': 1, 'S': 2, 'U': 1, 'B': 2}
+[uvbake]   ARCH_rotunda_attic_frame_07              ring     islands    10 faces weight-1 8/24 classes {'F': 8, 'D': 2, 'S': 4, 'U': 2, 'B': 8}
+[uvbake]   ARCH_rotunda_attic_niche_07              ring     islands     8 faces weight-1 5/24 classes {'F': 10, 'D': 2, 'U': 2, 'B': 10}
+[uvbake]   ARCH_rotunda_attic_pilaster_07_a         ring     islands     4 faces weight-1 0/6 classes {'F': 2, 'D': 1, 'U': 1, 'B': 2}
+[uvbake]   ARCH_rotunda_attic_pilaster_07_b         ring     islands     4 faces weight-1 2/6 classes {'F': 2, 'D': 1, 'U': 1, 'B': 2}
+[uvbake]   ARCH_rotunda_attic_corner_07             ring     islands     5 faces weight-1 2/6 classes {'F': 3, 'D': 1, 'U': 1, 'B': 1}
+[uvbake]   ARCH_rotunda_attic_corner_cap_07         ring     islands     5 faces weight-1 1/6 classes {'F': 3, 'D': 1, 'U': 1, 'B': 1}
+[uvbake]   ARCH_rotunda_attic_panel_01              ring     islands     6 faces weight-1 2/8 classes {'F': 2, 'D': 1, 'S': 2, 'U': 1, 'B': 2}
+[uvbake]   ARCH_rotunda_attic_frame_01              ring     islands    10 faces weight-1 8/24 classes {'F': 8, 'D': 2, 'S': 4, 'U': 2, 'B': 8}
+[uvbake]   ARCH_rotunda_attic_niche_01              ring     islands     8 faces weight-1 10/24 classes {'F': 10, 'D': 2, 'U': 2, 'B': 10}
+[uvbake]   ARCH_rotunda_attic_pilaster_01_a         ring     islands     4 faces weight-1 2/6 classes {'F': 2, 'D': 1, 'U': 1, 'B': 2}
+[uvbake]   ARCH_rotunda_attic_pilaster_01_b         ring     islands     4 faces weight-1 2/6 classes {'F': 2, 'D': 1, 'U': 1, 'B': 2}
+[uvbake]   ARCH_rotunda_attic_corner_01             ring     islands     5 faces weight-1 3/6 classes {'F': 3, 'D': 1, 'U': 1, 'B': 1}
+[uvbake]   ARCH_rotunda_attic_corner_cap_01         ring     islands     5 faces weight-1 3/6 classes {'F': 3, 'D': 1, 'U': 1, 'B': 1}
+[uvbake]   ARCH_rotunda_entablature                 ring     islands   184 faces weight-1 123/864 classes {'F': 336, 'D': 352, 'S': 16, 'U': 160}
+[uvbake]   ARCH_rotunda_dentils_LOD0                ornament islands   944 faces weight-1 870/2832 classes {'F': 2312, 'B': 520}
+[uvbake]   ARCH_rotunda_modillions_LOD0             ornament islands   304 faces weight-1 277/912 classes {'F': 744, 'B': 168}
+[uvbake]   ARCH_rotunda_eggs_LOD0                   ornament islands   768 faces weight-1 3456/18432 classes {'F': 9216, 'B': 9216}
+[uvbake]   ARCH_rotunda_column_00_LOD0              smart project, metres, weight 1
+[uvbake]   ARCH_rotunda_colbase_00_plinth           smart project, metres, weight 1
+[uvbake]   ARCH_rotunda_colbase_00_torus            smart project, metres, weight 1
+[uvbake]   ARCH_rotunda_drum                        ring     islands    40 faces weight-1 96/642 classes {'F': 256, 'D': 257, 'U': 129}
+[uvbake]   ARCH_rotunda_drum_band                   ring     islands    24 faces weight-1 192/1282 classes {'F': 512, 'D': 385, 'U': 385}
+[uvbake]   ARCH_rotunda_drum_cornice                ring     islands    40 faces weight-1 96/1026 classes {'F': 256, 'D': 385, 'U': 385}
+[uvbake]   ARCH_rotunda_archivolt_00                smart project, metres, weight 1
+[uvbake]   ARCH_rotunda_impost_00_a                 smart project, metres, weight 1
+[uvbake]   ARCH_rotunda_impost_00_b                 smart project, metres, weight 1
+[uvbake] group 0: tris 1876 atlas fill 41.4 % overlap texels 0 (0.000 %) OK; weight-1 (faces 07/00/01 front, columns) 741 m2 at 43 texels/m (2048 quadrant of the 4096 atlas)
+[uvbake] group 1: tris 39936 atlas fill 28.5 % overlap texels 0 (0.000 %) OK; weight-1 (faces 07/00/01 front, columns) 377 m2 at 50 texels/m (2048 quadrant of the 4096 atlas)
+[uvbake] group 2: tris 23834 atlas fill 44.4 % overlap texels 0 (0.000 %) OK; weight-1 (faces 07/00/01 front, columns) 390 m2 at 64 texels/m (2048 quadrant of the 4096 atlas)
+[uvbake] group 3: tris 448 atlas fill 12.6 % overlap texels 0 (0.000 %) OK; weight-1 (faces 07/00/01 front, columns) 29 m2 at 136 texels/m (2048 quadrant of the 4096 atlas)
+[uvbake] done, 0 failure(s)
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 23612 exited rc=0 after 33 s (max 900)

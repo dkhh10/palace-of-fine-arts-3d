@@ -1,0 +1,154 @@
+"""Phase 10 r1, step 8 -- wire the projected atlas into the concrete node group of assets/materials.blend (post-step).
+
+    scripts/blender_run.sh 600 -- --background assets/materials.blend --python scripts/mat_p10_integrate.py -- \
+        [--weight 0.6] [--r9-removal tied|full] [--col-sat 0.8] [--col-hue -6] [--save]
+    round-2 sweep: --weight 0 / 0.4 / 0.6 with the default `tied` removal (weight 0 = the pre-Phase-10 material).
+
+Inside `PFA_concrete` (every MAT_concrete_* and the column materials run through it), just before the group's Color
+output, after round 9's `Albedo Tint` (M_chroma) and ref-169 ratio:
+    c = mix(conf, c_r9, c_base)                   round 9 removed where the atlas is confident
+    c = mix(w, c, c * ratio_p10)      w = conf_p10 x WEIGHT x per-object share (0.6-1.0)
+`ratio_p10` / `conf_p10` come from PFA_p10_ratio.png / PFA_p10_mask.png (scripts/mat_p10_texture.py) through the
+`UVBake` layer (scripts/arch_uvbake.py).  A mesh without `UVBake` reads UV (0, 0), where the mask is 0 by
+construction, so every other object keeps the procedural exactly.  Where the atlas is confident it REPLACES round 9's single-photo ratio
+(never both).
+Idempotent: nodes named P10_* are removed and the original link restored before rebuilding.  Nothing else changes.
+`mat_build.py` rebuilds PFA_concrete from scratch: it must run this script after it (hand-off, same as arch_uvbake).
+"""
+import bpy, sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import common
+
+args = common.script_args()
+WEIGHT = float(args[args.index("--weight") + 1]) if "--weight" in args else 0.6
+TEX = common.ASSETS / "textures" / "projection2"
+
+ng = bpy.data.node_groups["PFA_concrete"]
+N, L = ng.nodes, ng.links
+go = next(n for n in N if n.type == "GROUP_OUTPUT")
+gi = next(n for n in N if n.type == "GROUP_INPUT")
+old_mix = N.get("P10_mix")
+if old_mix is not None:
+    a_in = next(s for s in old_mix.inputs if s.name == "A" and s.type == "RGBA")
+    src = a_in.links[0].from_socket
+    if src.node.name == "P10_unr9":
+        src = next(s for s in src.node.inputs if s.name == "A" and s.type == "RGBA").links[0].from_socket
+    for n in [n for n in N if n.name.startswith("P10_")]:
+        N.remove(n)
+    L.new(src, go.inputs["Color"])
+src = go.inputs["Color"].links[0].from_socket
+ph = next(n for n in N if n.type == "GROUP" and n.node_tree and n.node_tree.name == "PFA_photo")
+
+
+def node(t, name, **kw):
+    n = N.new(t); n.name = n.label = name
+    for k, v in kw.items():
+        setattr(n, k, v)
+    n.location = (go.location.x - 300, go.location.y - 300 - 60 * len([x for x in N if x.name.startswith("P10_")]))
+    return n
+
+
+def image(fname):
+    key = f"TEX_{fname[:-4]}"
+    img = bpy.data.images.get(key)
+    if img is None:
+        img = bpy.data.images.load(str(TEX / fname), check_existing=True)
+        img.name = key
+    else:
+        img.filepath = str(TEX / fname); img.reload()
+    img.colorspace_settings.name = "Non-Color"
+    return img
+
+
+uvn = node("ShaderNodeUVMap", "P10_uv"); uvn.uv_map = "UVBake"
+rim = node("ShaderNodeTexImage", "P10_ratio", interpolation="Linear", extension="EXTEND"); rim.image = image("PFA_p10_ratio.png")
+mim = node("ShaderNodeTexImage", "P10_mask", interpolation="Linear", extension="EXTEND"); mim.image = image("PFA_p10_mask.png")
+L.new(uvn.outputs["UV"], rim.inputs["Vector"]); L.new(uvn.outputs["UV"], mim.inputs["Vector"])
+sep = node("ShaderNodeSeparateColor", "P10_sep"); L.new(mim.outputs["Color"], sep.inputs["Color"])
+x2 = node("ShaderNodeVectorMath", "P10_x2", operation="SCALE")
+L.new(rim.outputs["Color"], x2.inputs[0]); x2.inputs["Scale"].default_value = 2.0
+r9 = node("ShaderNodeMath", "P10_r9w", operation="MULTIPLY")
+L.new(ph.outputs["Weight"], r9.inputs[0]); L.new(gi.outputs["Photo"], r9.inputs[1])
+comp = node("ShaderNodeMath", "P10_r9c", operation="SUBTRACT", use_clamp=True)
+comp.inputs[0].default_value = 1.0; L.new(r9.outputs[0], comp.inputs[1])
+wv = node("ShaderNodeMath", "P10_w", operation="MULTIPLY")
+L.new(sep.outputs[0], wv.inputs[0]); wv.inputs[1].default_value = WEIGHT
+w1 = node("ShaderNodeMath", "P10_w1", operation="MULTIPLY")
+L.new(wv.outputs[0], w1.inputs[0]); w1.inputs[1].default_value = 1.0      # (the r9 complement is no longer used)
+w2 = node("ShaderNodeMath", "P10_w2", operation="MULTIPLY", use_clamp=True)
+L.new(w1.outputs[0], w2.inputs[0])
+# per-instance variation (lead decision (b), 2026-09-24): the 16 rotunda columns share ONE mesh and one atlas region.
+# A U shift around the shaft axis is not possible (the shaft's UVBake islands are Smart-UV charts, not one cylinder
+# strip), so each object gets (1) a value jitter of the map of +-3 % and (2) its own share of the map, 0.6-1.0 of
+# the weight, both from Object Info > Random -- on top of the procedural's existing per-instance weathering.  Logged
+# as an exception request in the round report.
+oi = node("ShaderNodeObjectInfo", "P10_objinfo")
+jit = node("ShaderNodeMath", "P10_jit", operation="MULTIPLY_ADD")
+L.new(oi.outputs["Random"], jit.inputs[0]); jit.inputs[1].default_value = 0.06; jit.inputs[2].default_value = 0.97
+xj = node("ShaderNodeVectorMath", "P10_xj", operation="SCALE")
+L.new(x2.outputs[0], xj.inputs[0]); L.new(jit.outputs[0], xj.inputs["Scale"])
+r2 = node("ShaderNodeMath", "P10_r2", operation="MULTIPLY"); L.new(oi.outputs["Random"], r2.inputs[0]); r2.inputs[1].default_value = 7.31
+fr = node("ShaderNodeMath", "P10_fr", operation="FRACT"); L.new(r2.outputs[0], fr.inputs[0])
+ws = node("ShaderNodeMath", "P10_ws", operation="MULTIPLY_ADD")
+L.new(fr.outputs[0], ws.inputs[0]); ws.inputs[1].default_value = 0.4; ws.inputs[2].default_value = 0.6
+# REPLACE round 9 where the atlas is confident (the first cut yielded to it instead: round 9's projector is a world-
+# space projection from the hero station, so it covers the lagoon faces from EVERY camera and the atlas moved 0.5-1 % of
+# the cam02 / cam03 pixels): base = the colour before round 9's mix, r9 removed in proportion to conf, then the atlas.
+r9mix = src.node
+base_src = next(sk for sk in r9mix.inputs if sk.name == "A" and sk.is_linked and sk.enabled).links[0].from_socket
+print(f"[p10int] round-9 mix node {r9mix.name} ({r9mix.bl_idname}); base from {base_src.node.name}")
+unr9 = node("ShaderNodeMix", "P10_unr9"); unr9.data_type = "RGBA"
+# round-9 removal strength (final review #10): "tied" (default) = conf x WEIGHT, so weight 0 is a true no-op and the
+# removal never exceeds what the atlas puts back; "full" = conf (the first-round behaviour, 3472d7ee).
+R9_MODE = args[args.index("--r9-removal") + 1] if "--r9-removal" in args else "tied"
+if R9_MODE == "full":
+    L.new(sep.outputs[0], unr9.inputs["Factor"])
+else:
+    r9k = node("ShaderNodeMath", "P10_r9k", operation="MULTIPLY", use_clamp=True)
+    L.new(sep.outputs[0], r9k.inputs[0]); r9k.inputs[1].default_value = WEIGHT
+    L.new(r9k.outputs[0], unr9.inputs["Factor"])
+print(f"[p10int] round-9 removal: {R9_MODE}")
+L.new(src, next(sk for sk in unr9.inputs if sk.name == "A" and sk.type == "RGBA"))
+L.new(base_src, next(sk for sk in unr9.inputs if sk.name == "B" and sk.type == "RGBA"))
+src_r9 = src
+src = next(sk for sk in unr9.outputs if sk.name == "Result" and sk.type == "RGBA")
+mul = node("ShaderNodeVectorMath", "P10_mul", operation="MULTIPLY")
+L.new(src, mul.inputs[0]); L.new(xj.outputs[0], mul.inputs[1])
+L.new(ws.outputs[0], w2.inputs[1])
+mix = node("ShaderNodeMix", "P10_mix"); mix.data_type = "RGBA"
+a_in = next(s for s in mix.inputs if s.name == "A" and s.type == "RGBA")
+b_in = next(s for s in mix.inputs if s.name == "B" and s.type == "RGBA")
+L.new(w2.outputs[0], mix.inputs["Factor"]); L.new(src, a_in); L.new(mul.outputs[0], b_in)
+col_out = next(s for s in mix.outputs if s.name == "Result" and s.type == "RGBA")
+L.new(col_out, go.inputs["Color"])
+# the rose column shafts: ref 169's column mask (mat_r7_measure.columns on the REF169_XF-warped photo) is hue 24.8 /
+# sat 0.585; the atlas is mean-1 and neutral, so the shaft's mean colour is set here, on MAT_column_rose only, by a
+# Hue/Saturation node after the PFA_column group (idempotent: P10_colsat is removed and the link restored first).
+COL_SAT = float(args[args.index("--col-sat") + 1]) if "--col-sat" in args else 1.0
+COL_HUE = float(args[args.index("--col-hue") + 1]) if "--col-hue" in args else 0.0      # degrees
+mt = bpy.data.materials["MAT_column_rose"].node_tree
+old = mt.nodes.get("P10_colsat")
+if old is not None:
+    src_c = old.inputs["Color"].links[0].from_socket
+    dsts = [l.to_socket for l in old.outputs["Color"].links]
+    mt.nodes.remove(old)
+    for d in dsts:
+        mt.links.new(src_c, d)
+if COL_SAT != 1.0 or COL_HUE != 0.0:
+    cgn = next(n for n in mt.nodes if n.type == "GROUP" and n.node_tree and n.node_tree.name == "PFA_column")
+    src_c = cgn.outputs["Color"]
+    dsts = [l.to_socket for l in src_c.links]
+    hs = mt.nodes.new("ShaderNodeHueSaturation"); hs.name = hs.label = "P10_colsat"
+    hs.location = (cgn.location.x + 200, cgn.location.y - 200)
+    hs.inputs["Hue"].default_value = 0.5 + COL_HUE / 360.0
+    hs.inputs["Saturation"].default_value = COL_SAT
+    mt.links.new(src_c, hs.inputs["Color"])
+    for d in dsts:
+        mt.links.new(hs.outputs["Color"], d)
+    print(f"[p10int] MAT_column_rose: saturation x{COL_SAT}, hue {COL_HUE:+.1f} deg -> {len(dsts)} consumer(s)")
+users = [m.name for m in bpy.data.materials if m.node_tree and any(
+    n.type == "GROUP" and n.node_tree == ng for n in m.node_tree.nodes)]
+print(f"[p10int] PFA_concrete: atlas wired (weight {WEIGHT}); materials using the group: {users}")
+if "--save" in args:
+    common.save_blend(common.ASSETS / "materials.blend")
+    print("[p10int] saved assets/materials.blend")
