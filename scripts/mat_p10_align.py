@@ -160,11 +160,19 @@ def cmd_icp():
         print(f"  best with the cameras centred on face {sec}: inliers {by_sector[sec][0]} "
               f"(s {by_sector[sec][1]}, yaw {by_sector[sec][2]}, tz {by_sector[sec][3]})")
     n_, s, yaw, tz = res[0]
+    if SECTOR is not None:                     # hard camera-side prior: the photos are all on the lagoon side
+        n_, s, yaw, tz = by_sector[SECTOR]
+        res.insert(0, (n_, s, yaw, tz))
     print(f"search winner: inliers {n_} / {len(sub)}, s {s}, yaw {yaw}, tz {tz}, cameras centred at az {cam_az(s, yaw):.1f}")
     Rm = Rot.from_euler("z", yaw, degrees=True).as_matrix() @ B
     T = -s * Rm @ (B.T @ np.array([ux, uy, h0])) + np.array([0, 0, tz])
     s, Rm, T, rms, _ = trimmed_icp(X, tree, Y, NY, s, Rm, T, iters=40, trim=0.6)
     s, Rm, T, rms, dist = trimmed_icp(X, tree, Y, NY, s, Rm, T, iters=80, trim=0.5, yaw_only=False)
+    Cw0 = s * C @ Rm.T + T
+    az_med = float(np.median(np.degrees(np.arctan2(Cw0[:, 1], -Cw0[:, 0])) % 360))
+    print(f"after ICP: cameras centred at az {az_med:.1f} (lagoon face {FACE_AZ0})")
+    if SECTOR is not None and abs(((az_med - FACE_AZ0 + 180) % 360) - 180) > 22.5:
+        raise SystemExit("[align] ICP left the lagoon sector: camera prior violated")
     tilt = math.degrees(math.acos(np.clip((Rm @ up) @ np.array([0, 0, 1.0]), -1, 1)))
     Cw = s * C @ Rm.T + T
     print(f"7-DOF ICP: s {s:.4f} m/unit, trimmed-50 RMS {rms:.3f} m, median |d| all points {np.median(dist):.3f} m, "
@@ -273,5 +281,8 @@ def cmd_cameras():
           f"azimuth {np.percentile(az, [5, 50, 95]).round(1)} deg, height {np.percentile(Cs[:, 2], [5, 50, 95]).round(1)} m")
 
 
+SECTOR = None
 if __name__ == "__main__":
+    if len(sys.argv) > 2 and sys.argv[2].startswith("--sector"):
+        SECTOR = int(sys.argv[2].split("=")[1])
     {"icp": cmd_icp, "cameras": cmd_cameras, "seed169": cmd_seed169}[sys.argv[1]]()
