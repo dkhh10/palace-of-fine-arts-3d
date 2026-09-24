@@ -2,6 +2,8 @@
 
     scripts/blender_run.sh 2400 -- --background master.blend --python scripts/mat_p10_render.py -- --tag after \
         [--jobs hero,cam02,cam03,eevee] [--spp 64] [--atlas-off]
+--atlas-off renders the true pre-Phase-10 material (P10_w 0, P10_unr9 factor 0, column tint neutral).
+NOTE: the round-1 'before' renders (p10_before_*) zeroed P10_w only, so round 9 was already removed where conf > 0.
 
 hero  = CAM_qa_01_lagoon_hero 1920x1080 Cycles;  cam02 / cam03 = 1280x720 Cycles;  eevee = the hero in Eevee (parity).
 Written to renders/previews/materials/p10_<tag>_<job>.png.  Settings as scripts/mat_r10_render.py (the final Cycles
@@ -19,12 +21,21 @@ TAG = args[args.index("--tag") + 1] if "--tag" in args else "x"
 OUT = common.RENDERS / "previews" / "materials"
 OUT.mkdir(parents=True, exist_ok=True)
 scene = bpy.context.scene
-if "--atlas-off" in args:          # the fair "before": same master, the projected atlas weight 0 (P10_w), nothing else
+if "--atlas-off" in args:
+    # the true pre-Phase-10 material (final review #5): the atlas weight P10_w = 0 AND the round-9 removal P10_unr9
+    # factor = 0 (unlinked), and the column tint neutral -- every node mat_p10_integrate.py adds becomes a no-op.
     for ng in bpy.data.node_groups:
-        n = ng.nodes.get("P10_w") if ng.name.startswith("PFA_concrete") else None
+        if not ng.name.startswith("PFA_concrete"):
+            continue
+        n = ng.nodes.get("P10_w")
         if n is not None:
             n.inputs[1].default_value = 0.0
-            print(f"[p10render] atlas off in {ng.name}")
+        u = ng.nodes.get("P10_unr9")
+        if u is not None:
+            for l in list(u.inputs["Factor"].links):
+                ng.links.remove(l)
+            u.inputs["Factor"].default_value = 0.0
+        print(f"[p10render] atlas off in {ng.name} (P10_w 0, P10_unr9 0)")
     for m in bpy.data.materials:
         if m.name.startswith("MAT_column_rose") and m.node_tree and m.node_tree.nodes.get("P10_colsat"):
             hs = m.node_tree.nodes["P10_colsat"]; hs.inputs["Hue"].default_value = 0.5; hs.inputs["Saturation"].default_value = 1.0

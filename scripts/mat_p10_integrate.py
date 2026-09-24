@@ -1,7 +1,8 @@
 """Phase 10 r1, step 8 -- wire the projected atlas into the concrete node group of assets/materials.blend (post-step).
 
     scripts/blender_run.sh 600 -- --background assets/materials.blend --python scripts/mat_p10_integrate.py -- \
-        [--weight 0.6] [--save]
+        [--weight 0.6] [--r9-removal tied|full] [--col-sat 0.8] [--col-hue -6] [--save]
+    round-2 sweep: --weight 0 / 0.4 / 0.6 with the default `tied` removal (weight 0 = the pre-Phase-10 material).
 
 Inside `PFA_concrete` (every MAT_concrete_* and the column materials run through it), just before the group's Color
 output, after round 9's `Albedo Tint` (M_chroma) and ref-169 ratio:
@@ -97,7 +98,16 @@ r9mix = src.node
 base_src = next(sk for sk in r9mix.inputs if sk.name == "A" and sk.is_linked and sk.enabled).links[0].from_socket
 print(f"[p10int] round-9 mix node {r9mix.name} ({r9mix.bl_idname}); base from {base_src.node.name}")
 unr9 = node("ShaderNodeMix", "P10_unr9"); unr9.data_type = "RGBA"
-L.new(sep.outputs[0], unr9.inputs["Factor"])
+# round-9 removal strength (final review #10): "tied" (default) = conf x WEIGHT, so weight 0 is a true no-op and the
+# removal never exceeds what the atlas puts back; "full" = conf (the first-round behaviour, 3472d7ee).
+R9_MODE = args[args.index("--r9-removal") + 1] if "--r9-removal" in args else "tied"
+if R9_MODE == "full":
+    L.new(sep.outputs[0], unr9.inputs["Factor"])
+else:
+    r9k = node("ShaderNodeMath", "P10_r9k", operation="MULTIPLY", use_clamp=True)
+    L.new(sep.outputs[0], r9k.inputs[0]); r9k.inputs[1].default_value = WEIGHT
+    L.new(r9k.outputs[0], unr9.inputs["Factor"])
+print(f"[p10int] round-9 removal: {R9_MODE}")
 L.new(src, next(sk for sk in unr9.inputs if sk.name == "A" and sk.type == "RGBA"))
 L.new(base_src, next(sk for sk in unr9.inputs if sk.name == "B" and sk.type == "RGBA"))
 src_r9 = src

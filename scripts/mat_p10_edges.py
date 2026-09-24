@@ -238,6 +238,42 @@ HZ_W = 3.0
 if __name__ == "__main__":
     from pathlib import Path
     cmd, dd = sys.argv[1], Path(sys.argv[2])
+    if cmd == "holdout":
+        # final review #1: held-out split.  Per used camera: undo its per-camera correction (back to the similarity),
+        # split the model contour points by image column at their median (left / right half), fit the rotation on one
+        # half (two peak iterations), measure the peak residual on the OTHER half; both directions.
+        meta = json.loads((C.WORK / "depth_master" / "meta.json").read_text())
+        cams = C.load_cams(); rc = json.loads((C.WORK / "refine_cams.json").read_text())
+        out = []
+        for k in meta["cams"]:
+            c = dict(cams[k]); pc = rc.get(c["file"])
+            if pc:
+                dR = Rot.from_rotvec(pc["rotvec"]).as_matrix()
+                c["R"] = (dR.T @ np.asarray(c["R"])).tolist(); c["t"] = (dR.T @ np.asarray(c["t"])).tolist()
+            E, A = model_edges(C.read_passes(dd / f"cam_{k:02d}.exr"))
+            uv, z = C.project(E, c)
+            med = np.median(uv[:, 0])
+            halves = (uv[:, 0] < med, uv[:, 0] >= med)
+            for fi, hi in ((0, 1), (1, 0)):
+                cc = dict(c)
+                for it in range(2):
+                    dx, dy, _, _ = peak_offset(cc, E[halves[fi]], A[halves[fi]])
+                    if not np.isfinite(dx):
+                        break
+                    fx = cc["K"][0][0]
+                    d = Rot.from_rotvec([-dy / fx, dx / fx, 0.0]).as_matrix()
+                    cc["R"] = (d @ np.asarray(cc["R"])).tolist(); cc["t"] = (d @ np.asarray(cc["t"])).tolist()
+                fa = peak_offset(cc, E[halves[fi]], A[halves[fi]])
+                hb = peak_offset(cc, E[halves[hi]], A[halves[hi]])
+                out.append(dict(file=c["file"], fit_half=fi, fit_resid=float(math.hypot(fa[0], fa[1])),
+                                heldout_resid=float(math.hypot(hb[0], hb[1])), heldout_dx=hb[0], heldout_dy=hb[1]))
+                print(f"[holdout] cam {k:2d} fit half {fi}: fit {out[-1]['fit_resid']:5.2f} px  held-out {out[-1]['heldout_resid']:5.2f} px", flush=True)
+        h = np.array([o["heldout_resid"] for o in out]); f = np.array([o["fit_resid"] for o in out])
+        summ = dict(n=len(out), fit_median=float(np.nanmedian(f)), heldout_median=float(np.nanmedian(h)),
+                    heldout_p75=float(np.nanpercentile(h, 75)), heldout_le4=int((h <= 4).sum()), heldout_le8=int((h <= 8).sum()))
+        print("[holdout] " + json.dumps(summ))
+        (C.P2 / "evidence" / "registration_holdout.json").write_text(json.dumps(dict(summary=summ, rows=out), indent=1))
+        raise SystemExit(0)
     if cmd == "peakfix":
         # per camera: the rotation about its centre that moves the projection by the measured peak offset
         # (du = f * theta_y, dv = f * phi_x); composed onto any refine_cams.json already on disk (iterate).
