@@ -5,11 +5,12 @@
 
 Inside `PFA_concrete` (every MAT_concrete_* and the column materials run through it), just before the group's Color
 output, after round 9's `Albedo Tint` (M_chroma) and ref-169 ratio:
-    c = mix(w, c, c * ratio_p10)      w = conf_p10 x WEIGHT x (1 - round9_weight x Photo)
+    c = mix(conf, c_r9, c_base)                   round 9 removed where the atlas is confident
+    c = mix(w, c, c * ratio_p10)      w = conf_p10 x WEIGHT x per-object share (0.6-1.0)
 `ratio_p10` / `conf_p10` come from PFA_p10_ratio.png / PFA_p10_mask.png (scripts/mat_p10_texture.py) through the
 `UVBake` layer (scripts/arch_uvbake.py).  A mesh without `UVBake` reads UV (0, 0), where the mask is 0 by
-construction, so every other object keeps the procedural exactly.  Where round 9's projector already acts (the hero
-band from the hero station) the new map yields, so round 9's measured hero numbers are not applied twice.
+construction, so every other object keeps the procedural exactly.  Where the atlas is confident it REPLACES round 9's single-photo ratio
+(never both).
 Idempotent: nodes named P10_* are removed and the original link restored before rebuilding.  Nothing else changes.
 `mat_build.py` rebuilds PFA_concrete from scratch: it must run this script after it (hand-off, same as arch_uvbake).
 """
@@ -29,6 +30,8 @@ old_mix = N.get("P10_mix")
 if old_mix is not None:
     a_in = next(s for s in old_mix.inputs if s.name == "A" and s.type == "RGBA")
     src = a_in.links[0].from_socket
+    if src.node.name == "P10_unr9":
+        src = next(s for s in src.node.inputs if s.name == "A" and s.type == "RGBA").links[0].from_socket
     for n in [n for n in N if n.name.startswith("P10_")]:
         N.remove(n)
     L.new(src, go.inputs["Color"])
@@ -70,7 +73,7 @@ comp.inputs[0].default_value = 1.0; L.new(r9.outputs[0], comp.inputs[1])
 wv = node("ShaderNodeMath", "P10_w", operation="MULTIPLY")
 L.new(sep.outputs[0], wv.inputs[0]); wv.inputs[1].default_value = WEIGHT
 w1 = node("ShaderNodeMath", "P10_w1", operation="MULTIPLY")
-L.new(wv.outputs[0], w1.inputs[0]); L.new(comp.outputs[0], w1.inputs[1])
+L.new(wv.outputs[0], w1.inputs[0]); w1.inputs[1].default_value = 1.0      # (the r9 complement is no longer used)
 w2 = node("ShaderNodeMath", "P10_w2", operation="MULTIPLY", use_clamp=True)
 L.new(w1.outputs[0], w2.inputs[0])
 # per-instance variation (lead decision (b), 2026-09-24): the 16 rotunda columns share ONE mesh and one atlas region.
@@ -87,6 +90,18 @@ r2 = node("ShaderNodeMath", "P10_r2", operation="MULTIPLY"); L.new(oi.outputs["R
 fr = node("ShaderNodeMath", "P10_fr", operation="FRACT"); L.new(r2.outputs[0], fr.inputs[0])
 ws = node("ShaderNodeMath", "P10_ws", operation="MULTIPLY_ADD")
 L.new(fr.outputs[0], ws.inputs[0]); ws.inputs[1].default_value = 0.4; ws.inputs[2].default_value = 0.6
+# REPLACE round 9 where the atlas is confident (the first cut yielded to it instead: round 9's projector is a world-
+# space projection from the hero station, so it covers the lagoon faces from EVERY camera and the atlas moved 0.5-1 % of
+# the cam02 / cam03 pixels): base = the colour before round 9's mix, r9 removed in proportion to conf, then the atlas.
+r9mix = src.node
+base_src = next(sk for sk in r9mix.inputs if sk.name == "A" and sk.is_linked and sk.enabled).links[0].from_socket
+print(f"[p10int] round-9 mix node {r9mix.name} ({r9mix.bl_idname}); base from {base_src.node.name}")
+unr9 = node("ShaderNodeMix", "P10_unr9"); unr9.data_type = "RGBA"
+L.new(sep.outputs[0], unr9.inputs["Factor"])
+L.new(src, next(sk for sk in unr9.inputs if sk.name == "A" and sk.type == "RGBA"))
+L.new(base_src, next(sk for sk in unr9.inputs if sk.name == "B" and sk.type == "RGBA"))
+src_r9 = src
+src = next(sk for sk in unr9.outputs if sk.name == "Result" and sk.type == "RGBA")
 mul = node("ShaderNodeVectorMath", "P10_mul", operation="MULTIPLY")
 L.new(src, mul.inputs[0]); L.new(xj.outputs[0], mul.inputs[1])
 L.new(ws.outputs[0], w2.inputs[1])
