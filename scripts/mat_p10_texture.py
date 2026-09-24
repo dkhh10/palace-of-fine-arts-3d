@@ -23,7 +23,8 @@ import cv2
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
 import mat_p10_common as C
 
-VARIANT = {0: "col_d", 1: "col_a", 2: "col_d", 3: "col_a"}      # the lower robust inter-view spread per group
+VARIANT = {0: "col_a", 1: "col_a", 2: "col_a", 3: "col_a"}   # (a) gain + gamma: (d) buys <= 0.013 of spread on
+# groups 0 / 2, loses 0.012 / 0.106 on 1 / 3 and leaves a LARGER drum sun gradient (7.2 vs 5.9 % per 10 deg)
 TPM = {0: 21.5, 1: 25.0, 2: 32.0, 3: 68.0}                      # texels per metre on weight-1 faces at 1024
 LF_M, MF_M = 0.75, 0.22
 LF_LO, LF_HI, MF_LO, MF_HI = 0.65, 1.55, 0.62, 1.62
