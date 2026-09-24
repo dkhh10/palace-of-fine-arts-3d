@@ -1212,3 +1212,12 @@ from a controlled site capture (option C). No projection round 2: the stop rule 
 foliage colour, column tint as a plain retune). arch_build.py hook wired and verified (renders/logs/p10_arch_hook_check2.log): a fresh build re-lays 4 ornament
 courses, so the stale-atlas hash is a warning inside the hook and strict when arch_uvbake.py runs directly. Residuals for delivery.md: registration, ORN
 reliefs without UVBake, colonnade uncovered, round-1 "before" renders not the true pre-Phase-10 state (atlas-off fixed afterwards).
+
+## 2026-09-24 · Materials r2 delivered (phase10-water 2baa190); willow densification KEPT; review in flight
+Water: reflection breakup Lx 12.1 -> 6.4 px, aniso 10.6 -> 1.94 (ref 7.9 / 2.36), R-B +23.9 -> +50.1 (hold >= 35 passes); reflection lum 119.9 (floor 124) and
+hue 48 (max 45) still short, all four values closer to ref; near-water sat 0.191 (floor 0.22) traded for hue 204 -> 195.5 (ref 187.4). Foliage: conifer luma
+54 -> 100 (ref 108) passes, B/G 0.35 vs 0.77 fails (the only albedo that reached it read lavender from cam06: rejected, olive-grey shipped). Columns 104.2 / 28.6 /
+0.614 vs ref 96.8 / 24.8 / 0.585: hue and sat inside the window. Willow box 2 dark 29.1 % vs the round-1 before 28.4 % (ref 8.9): 0.7 points is inside the 32 vs
+64 spp noise and ENV r2 already re-placed the willows on the photo's footprint, so the r1 densification stays (the revert clause in the ENV r1 entry is closed).
+Hand-off logged, not applied: ref 169's open-water boxes sit at sat 0.14-0.25, so the window's sat floor (0.22) describes the render, not the photo; retarget
+only with the user. The lead viewed the sheet: reflection streaks, olive conifers and rose shafts all read closer to ref 169.
