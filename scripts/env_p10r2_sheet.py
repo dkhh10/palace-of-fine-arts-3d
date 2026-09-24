@@ -5,7 +5,7 @@
 
 Row 1  cam 01 at 100 % around the willow box (x 0.33-0.51, y 0.40-0.68; box in yellow): Eevee before | Eevee after |
        Cycles 32 spp after | ref 169 (registered, env_p10_boxes.ref_frame), each shown x1.5 (nearest-free resample).
-Row 2  the index pass (own-pixel alpha, env_p10r2_mask.py) over ref 169: before (red) | after (red) | ref's
+Row 2  the index pass (own-pixel alpha, env_p10r2_mask.py) over ref 169: before (red) | after (red; the P10R2_ADD pale crown orange) | ref's
        hand-segmented willow (cyan) | after silhouette classes (blue column in front, green in-plane stone, red side-arch
        opening, magenta drum; the hero-arch count is in the caption).
 Row 3  cam 02 full frame at 960 px: Eevee before | after.
@@ -60,21 +60,22 @@ def labelled(im, text):
 
 def main():
     ref = Image.fromarray(B.ref_frame().astype("uint8"))
-    m = {k: WB.load_mask(P / f"p10r2_{k}_mask_target.png") for k in ("before", "after2")}
+    m = {k: WB.load_mask(P / f"p10r2_{k}_mask_target.png") for k in ("before", "after3")}
     rm = WB.ref_mask()
     st = {k: WB.box_stats(v) for k, v in m.items()}
     sr = WB.box_stats(rm)
-    js = json.loads((P / "p10r2_after2_mask.json").read_text())["silhouette"]["target"]
-    sil = np.asarray(Image.open(P / "p10r2_after2_silhouette_target.png").convert("RGBA"))
+    js = json.loads((P / "p10r2_after3_mask.json").read_text())["silhouette"]["target"]
+    sil = np.asarray(Image.open(P / "p10r2_after3_silhouette_target.png").convert("RGBA"))
     silim = Image.fromarray(np.where(sil[..., 3:4] > 0, sil[..., :3], np.asarray(ref) // 3).astype("uint8"))
     row1 = [labelled(crop(rgb(P / "p10r2_before_cam01.png")), "Eevee BEFORE (6.9,43.4) h9"),
-            labelled(crop(rgb(P / "p10r2_after_cam01.png")), "Eevee AFTER (4.4,43.4) h5.4 w1.7"),
+            labelled(crop(rgb(P / "p10r2_after_cam01.png")), "Eevee AFTER willow (4.4,43.4) h5.4 w1.7 + P10R2_ADD"),
             labelled(crop(rgb(P / "p10r2_cycles_after_cam01.png")), "Cycles 32 spp AFTER"),
             labelled(crop(ref), "ref 169 (registered to cam 01)")]
     row2 = [labelled(crop(overlay(ref, m["before"], (255, 0, 0))),
                      f"own px BEFORE: box {st['before'][0]:.1f} %  top row {st['before'][1]:.0f}"),
-            labelled(crop(overlay(ref, m["after2"], (255, 0, 0))),
-                     f"own px AFTER: box {st['after2'][0]:.1f} %  top row {st['after2'][1]:.0f}"),
+            labelled(crop(overlay(overlay(ref, WB.load_mask(P / "p10r2_after3_mask_standin.png"), (255, 160, 0), 0.35),
+                              m["after3"], (255, 0, 0))),
+                     f"own px AFTER (+stand-in orange): box {st['after3'][0]:.1f} %  top row {st['after3'][1]:.0f}"),
             labelled(crop(overlay(ref, rm, (0, 255, 255))), f"ref willow polygon: box {sr[0]:.1f} %  top row {sr[1]:.0f}"),
             labelled(crop(silim), f"AFTER classes: hero arch {js['hero_arch_opening_px']}  drum {js['drum_px']}  "
                                   f"side arch {js['side_arch_opening_px']} px")]
