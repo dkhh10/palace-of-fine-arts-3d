@@ -1,0 +1,6 @@
+  peak |delta lum|  29.84   pixels moved > 3 lum  2.79 %   mean |delta| where moved  6.57
+  largest single-pixel step, raw 23.75 lum (geometry edges + TAA)   BLURRED (the seam metric) 4.962 lum / px
+  changed region rows 48-525 cols 331-935; row-std of the difference across that band 0.200
+  peak |delta lum|  27.46   pixels moved > 3 lum  0.98 %   mean |delta| where moved  6.10
+  largest single-pixel step, raw 15.72 lum (geometry edges + TAA)   BLURRED (the seam metric) 3.093 lum / px
+  changed region rows 22-368 cols 560-850; row-std of the difference across that band 0.083

@@ -1,0 +1,7 @@
+HOLD TABLE (hero Cycles 1920x1080 64 spp; before = same master, atlas off)   box: before -> after | ref 169 | hold r10b | closer to ref?
+  attic_sunlit  187.0/36.9/0.513 -> 187.0/36.9/0.513 | ref 189.5/40.0/0.590 | 186.1/sat .520/R-B +117 | lum same, hue yes, sat yes
+  attic_shaded  119.8/41.2/0.687 -> 129.1/40.9/0.593 | ref 120.0/30.4/0.449 | 121.3/hue 41.3/sat .633 | lum NO, hue yes, sat yes
+  entablature   118.9/38.1/0.768 -> 117.4/38.5/0.772 | ref 134.5/32.4/0.611 | - | lum NO, hue same, sat same
+  columns       73.7/28.8/0.701 -> 82.3/28.3/0.658 | ref 96.8/24.8/0.585 | - | lum yes, hue yes, sat yes
+  attic QA box anisotropy 5.07 -> 5.07 (>= 2.0 narrow 8.46 -> 8.47); water/reflection boxes unchanged (<= 0.2 lum)
+  seams: cam02 2.8 % px moved, blurred step 4.96 lum/px; cam03 1.0 %, 3.09 lum/px (round-9 seam metric)

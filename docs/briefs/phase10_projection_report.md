@@ -31,3 +31,24 @@ Sheets: `renders/qa_comparisons/mat_p10_sheet.png`, `renders/qa_comparisons/mat_
 - **EXPORT:** the atlas sits inside the PFA_concrete node tree, so the Phase 6 PBR bake picks it up. UVBake must exist at bake time (it is in master_delivery) but does not need to survive into the glTF. Images: PFA_p10_ratio.png and PFA_p10_mask.png.
 
 **Open items:** the shaded-attic lum hold (129.1) and the column sat (0.658); one more material iteration would fix both, for example weight 0.4 and column sat × 0.7. Projecting onto ORN instances (the hero's attic reliefs) would need UVBake on ORN, which ORN owns. Colonnade not covered.
+
+## Final-review fixes (docs/reviews/phase10_proj_r1_review.md, 2026-09-24) — supersedes the registration claims above
+- **#1 held-out registration** (`mat_p10_edges.py holdout`, evidence/registration_holdout.json): per used camera, the per-camera
+  correction is undone, the rotation re-fitted on the left (or right) half of the contour points and the peak residual measured on the
+  other half. Fit-half median 0.5 px, **held-out median 20.4 px** (p75 32.5; 7 of 86 halves <= 4 px). The two halves pull in opposite
+  x directions (median dx -9.5 vs +11.0, opposite sign in 88 %): a per-image SCALE error (focal / distance ambiguity) that a rotation
+  cannot fix. The 0.71 px was a fit residual; the registration is NOT <= 4 px.
+- **#3 land gate** (`mat_p10_gates.py`, evidence/camera_gates.json): 28 of 71 centres inside the OSM lagoon, 40 more than 10 m behind the
+  east shore on their bearing; **40 of the 43 used cameras drop**, 3 remain (ref_085, ref_095, ref_161). Same cause as #1 (stations
+  pushed 20-70 m too far). Steps 6-8 were **not** re-run with 3 cameras: that atlas would be a 3-view projection from mis-scaled
+  stations. The shipped atlas (43 views) stays on the branch; recommend round 2 ships it at `--weight 0` (= pre-Phase-10 material,
+  now an exact no-op) until the registration gets a per-image scale / focal solve (e.g. PnP from hand-picked points), then re-projects.
+- **#5** `mat_p10_render.py --atlas-off` now zeroes P10_w AND unlinks/zeroes P10_unr9 and neutralises the column tint. Note: the round-1
+  "before" renders zeroed P10_w only, so round 9 was already removed there where conf > 0: the hold table's before column is not the
+  true pre-Phase-10 state (round 2 re-measures on the merged master).
+- **#10** round-9 removal is now `--r9-removal tied` (default: factor = conf x weight; weight 0 = no-op) or `full` (round-1 behaviour).
+  Round 2 sweep: `mat_p10_integrate.py -- --weight 0 | 0.4 | 0.6` (tied). materials.blend saved with weight 0.6, tied.
+- **#9 evidence** in assets/textures/projection2/evidence/: registration_peak(.json/_summary.txt, control table), registration_chamfer_weak,
+  registration_holdout, camera_gates, proj_stats, texture_stats, hero_hold_table, hero_hold_vs_ref169, seams_cam02_cam03.
+- **#12 determinism**: arch_uvbake.py run twice without --save / --write-hashes on the saved architecture.blend: both runs 0 failures,
+  all 37 per-mesh SHA-1 equal to the committed ones (logs evidence/uvbake_determinism_run{1,2}.log) -> the SHA hook is usable as is.

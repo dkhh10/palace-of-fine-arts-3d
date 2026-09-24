@@ -1,0 +1,859 @@
+{
+ "metric": "peak of the photo gradient along the model's occluding contour (mat_p10_edges.py peak)",
+ "per_image": {
+  "ref_009_rotunda_Palace_of_Fine_Arts_San_Francisco.jpg": 0.0,
+  "ref_011_rotunda_Palace_of_Fine_Arts_March_2018_1460.jpg": 0.0,
+  "ref_012_rotunda_Palace_of_Fine_Arts_March_2018_1470.jpg": 0.0,
+  "ref_013_rotunda_Palace_of_Fine_Arts_March_2018_1484.jpg": 0.0,
+  "ref_014_rotunda_Palace_of_Fine_Arts_March_2018_1486.jpg": 1.0,
+  "ref_015_rotunda_Palace_of_Fine_Arts_March_2018_1488.jpg": 0.0,
+  "ref_016_rotunda_Palace_of_Fine_Arts_March_2018_1529.jpg": 36.6742416417845,
+  "ref_017_rotunda_Palace_of_Fine_Arts_March_2018_1539.jpg": 0.5,
+  "ref_018_rotunda_Palace_of_Fine_Arts_March_2018_1545.jpg": 23.926972228010797,
+  "ref_021_rotunda_Palace_of_Fine_Arts_panoramio_2.jpg": 13.200378782444085,
+  "ref_022_rotunda_Palace_of_Fine_Arts_02.jpg": 0.7071067811865476,
+  "ref_023_rotunda_Palace_of_Fine_Arts_03.jpg": 0.5,
+  "ref_024_rotunda_Palace_of_Fine_Arts_08.jpg": 0.5,
+  "ref_025_rotunda_Palace_of_Fine_Arts_09.jpg": 22.561028345356956,
+  "ref_027_rotunda_Palace_of_Fine_Arts_2012_04.jpg": 16.56804152578089,
+  "ref_033_rotunda_Palace_of_Fine_Arts_Sa_Francisco_July16.jpg": 0.0,
+  "ref_034_rotunda_Palace_of_Fine_Arts_San_Francisco_December_2021.jpg": 10.111874208078342,
+  "ref_035_rotunda_Palace_of_Fine_Arts_Theatre_in_San_Francisco.jpg": 0.5,
+  "ref_039_rotunda_Palace_of_Fine_Arts_Presidio_San_Francisco.jpg": 0.0,
+  "ref_041_rotunda_Palace_of_Fine_Arts_San_Francisco_16669848394.jpg": 1.118033988749895,
+  "ref_057_rotunda_Palace_of_Fine_Arts_29.jpg": 0.0,
+  "ref_058_rotunda_Palace_of_Fine_Arts_30.jpg": 1.118033988749895,
+  "ref_059_rotunda_Palace_of_Fine_Arts_31.jpg": 15.524174696260024,
+  "ref_060_rotunda_Palace_of_Fine_Arts_33.jpg": 0.0,
+  "ref_062_rotunda_Palace_of_Fine_Arts_View_of_Rotunda_from_north_eas.jpg": 0.5,
+  "ref_063_rotunda_Palace_of_Fine_Arts_View_of_Rotunda_from_south_eas.jpg": 0.5,
+  "ref_064_rotunda_Palace_of_fine_arts_2006.jpg": 0.5,
+  "ref_065_rotunda_Palace_of_fine_arts_in_San_Francisco.jpg": 0.0,
+  "ref_066_rotunda_Palace_of_fine_arts_20180504.jpg": 7.516648189186454,
+  "ref_067_rotunda_Palacio_de_Finas_Artes_San_Francisco.jpg": 0.5,
+  "ref_070_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg": 0.0,
+  "ref_071_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg": 0.0,
+  "ref_072_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg": 2.0615528128088303,
+  "ref_078_rotunda_San_Francisco_34615450294.jpg": 0.5,
+  "ref_079_rotunda_San_Francisco_34647319243.jpg": 40.01249804748511,
+  "ref_085_rotunda_San_Francisco_CA_USA_Palace_of_Fine_Arts_2022_0921.jpg": 0.5,
+  "ref_086_rotunda_San_Francisco_Palace_Of_Fine_Art.jpg": 9.013878188659973,
+  "ref_087_rotunda_San_Francisco_Palace_of_Fine_Arts_with_Trees_01.jpg": 2.692582403567252,
+  "ref_088_rotunda_San_Francisco_California3920.jpg": 9.340770846134703,
+  "ref_089_rotunda_Sf_exploratorium.jpg": 1.5811388300841898,
+  "ref_090_rotunda_The_Palace_of_Fine_Arts_San_Francisco_2013.jpg": 0.7071067811865476,
+  "ref_091_rotunda_The_Palace_of_Fine_Arts_and_its_lagoon_in_San_Fran.jpg": 18.006943105369107,
+  "ref_093_rotunda_The_rotunda_of_the_Palace_of_Fine_Arts_San_Francis.jpg": 15.008331019803634,
+  "ref_095_rotunda_US_CA_San_Francisco_North_America_The_West_4889277.jpg": 0.0,
+  "ref_098_main_2016_09_25_Palace_of_Fine_Arts_San_Francisco_NRHP.jpg": 0.5,
+  "ref_099_main_2016_09_25_Palace_of_Fine_Arts_and_fountain_San_Fr.jpg": 0.0,
+  "ref_128_main_Corinthian_columns_and_rotunda_Palace_of_Fine_Arts.jpg": 1.118033988749895,
+  "ref_133_main_Exploratorium_dyeclan_com_panoramio.jpg": 0.0,
+  "ref_135_main_Fountain_322090800.jpg": NaN,
+  "ref_139_main_Gushing_lagoon_Palace_of_Fine_Arts_San_Francisco_4.jpg": 0.0,
+  "ref_140_main_Gushing_lagoon_Palace_of_Fine_Arts_San_Francisco.jpg": 1.0,
+  "ref_141_main_Heritage_Art_Museum_in_California.jpg": 1.0,
+  "ref_144_main_Lagoon_Palace_of_Fine_Arts_San_Francisco_CA_DSC024.jpg": 0.0,
+  "ref_145_main_Lagoon_Palace_of_Fine_Arts_San_Francisco_CA_DSC024.jpg": 2.0615528128088303,
+  "ref_148_main_Marina_District_San_Francisco_CA_USA_panoramio_10.jpg": 0.7071067811865476,
+  "ref_149_main_Marina_District_San_Francisco_CA_USA_panoramio_12.jpg": 11.510864433221338,
+  "ref_150_main_Marina_District_San_Francisco_CA_USA_panoramio_2.jpg": 0.5,
+  "ref_151_main_Marina_District_San_Francisco_CA_USA_panoramio_3.jpg": 28.111385593741193,
+  "ref_152_main_Marina_District_San_Francisco_CA_USA_panoramio_4.jpg": 0.0,
+  "ref_154_main_Marina_District_San_Francisco_CA_USA_panoramio_6.jpg": 34.935655139126844,
+  "ref_156_main_Marina_District_San_Francisco_CA_USA_panoramio_8.jpg": 2.5,
+  "ref_158_main_Marina_District_San_Francisco_CA_USA_panoramio.jpg": 1.118033988749895,
+  "ref_161_main_Maybeck_Fine_Arts_Palace_3.jpg": 3.5355339059327378,
+  "ref_164_main_PALACE_OF_FINE_ARTS.jpg": 10.5,
+  "ref_169_main_Palace_of_Fine_Arts_16794p.jpg": 23.345235059857504,
+  "ref_170_main_Palace_of_Fine_Arts_322090718.jpg": 15.20690632574555,
+  "ref_171_main_Palace_of_Fine_Arts_9331688296.jpg": 0.5,
+  "ref_174_main_Palace_of_Fine_Arts_March_2018_1464.jpg": 1.0,
+  "ref_175_main_Palace_of_Fine_Arts_March_2018_1468.jpg": 0.5,
+  "ref_176_main_Palace_of_Fine_Arts_March_2018_1476.jpg": 0.0,
+  "ref_177_main_Palace_of_Fine_Arts_March_2018_1480.jpg": 0.5
+ },
+ "detail": {
+  "ref_009_rotunda_Palace_of_Fine_Arts_San_Francisco.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.4448737702519836,
+   "control": {
+    "10": 10.0,
+    "20": 20.303940504246953,
+    "40": 40.0
+   }
+  },
+  "ref_011_rotunda_Palace_of_Fine_Arts_March_2018_1460.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.3687989365455702,
+   "control": {
+    "10": 10.0,
+    "20": 20.0,
+    "40": 39.5
+   }
+  },
+  "ref_012_rotunda_Palace_of_Fine_Arts_March_2018_1470.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.457956032572226,
+   "control": {
+    "10": 10.012492197250394,
+    "20": 20.006249023742555,
+    "40": 40.0
+   }
+  },
+  "ref_013_rotunda_Palace_of_Fine_Arts_March_2018_1484.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.3482784511846047,
+   "control": {
+    "10": 10.5,
+    "20": 20.5,
+    "40": 40.0
+   }
+  },
+  "ref_014_rotunda_Palace_of_Fine_Arts_March_2018_1486.jpg": {
+   "dx": -1.0,
+   "dy": 0.0,
+   "residual": 1.0,
+   "sharpness": 1.3224846368506304,
+   "control": {
+    "10": 11.0,
+    "20": 23.5,
+    "40": 42.0
+   }
+  },
+  "ref_015_rotunda_Palace_of_Fine_Arts_March_2018_1488.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.4083169508985873,
+   "control": {
+    "10": 10.012492197250394,
+    "20": 20.006249023742555,
+    "40": 40.0
+   }
+  },
+  "ref_016_rotunda_Palace_of_Fine_Arts_March_2018_1529.jpg": {
+   "dx": -33.0,
+   "dy": -16.0,
+   "residual": 36.6742416417845,
+   "sharpness": 1.1527396248841837,
+   "control": {
+    "10": 54.56189146281496,
+    "20": 33.5,
+    "40": 40.50308630215727
+   }
+  },
+  "ref_017_rotunda_Palace_of_Fine_Arts_March_2018_1539.jpg": {
+   "dx": -0.5,
+   "dy": 0.0,
+   "residual": 0.5,
+   "sharpness": 1.2711888275431384,
+   "control": {
+    "10": 10.5,
+    "20": 20.5,
+    "40": 40.50308630215727
+   }
+  },
+  "ref_018_rotunda_Palace_of_Fine_Arts_March_2018_1545.jpg": {
+   "dx": -4.5,
+   "dy": 23.5,
+   "residual": 23.926972228010797,
+   "sharpness": 1.2157923966483435,
+   "control": {
+    "10": 20.554804791094465,
+    "20": 32.55764119219941,
+    "40": 35.22782990761707
+   }
+  },
+  "ref_021_rotunda_Palace_of_Fine_Arts_panoramio_2.jpg": {
+   "dx": -5.5,
+   "dy": 12.0,
+   "residual": 13.200378782444085,
+   "sharpness": 1.3643941855820145,
+   "control": {
+    "10": 18.867962264113206,
+    "20": 28.040149785619906,
+    "40": 40.87175063537161
+   }
+  },
+  "ref_022_rotunda_Palace_of_Fine_Arts_02.jpg": {
+   "dx": -0.5,
+   "dy": -0.5,
+   "residual": 0.7071067811865476,
+   "sharpness": 1.2713490718385927,
+   "control": {
+    "10": 10.51189802081432,
+    "20": 20.506096654409877,
+    "40": 40.50308630215727
+   }
+  },
+  "ref_023_rotunda_Palace_of_Fine_Arts_03.jpg": {
+   "dx": 0.0,
+   "dy": -0.5,
+   "residual": 0.5,
+   "sharpness": 1.3758739977100827,
+   "control": {
+    "10": 10.51189802081432,
+    "20": 20.5,
+    "40": 40.50308630215727
+   }
+  },
+  "ref_024_rotunda_Palace_of_Fine_Arts_08.jpg": {
+   "dx": 0.5,
+   "dy": 0.0,
+   "residual": 0.5,
+   "sharpness": 1.2867199066291193,
+   "control": {
+    "10": 10.012492197250394,
+    "20": 19.5,
+    "40": 39.50316443020736
+   }
+  },
+  "ref_025_rotunda_Palace_of_Fine_Arts_09.jpg": {
+   "dx": -5.0,
+   "dy": 22.0,
+   "residual": 22.561028345356956,
+   "sharpness": 1.1815318858168447,
+   "control": {
+    "10": 17.507141400011598,
+    "20": 20.615528128088304,
+    "40": 40.19950248448356
+   }
+  },
+  "ref_027_rotunda_Palace_of_Fine_Arts_2012_04.jpg": {
+   "dx": -1.5,
+   "dy": -16.5,
+   "residual": 16.56804152578089,
+   "sharpness": 1.2606911067777873,
+   "control": {
+    "10": 10.012492197250394,
+    "20": 20.506096654409877,
+    "40": 40.50308630215727
+   }
+  },
+  "ref_033_rotunda_Palace_of_Fine_Arts_Sa_Francisco_July16.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.4199297660916033,
+   "control": {
+    "10": 11.0,
+    "20": 20.0,
+    "40": 41.0
+   }
+  },
+  "ref_034_rotunda_Palace_of_Fine_Arts_San_Francisco_December_2021.jpg": {
+   "dx": -1.5,
+   "dy": -10.0,
+   "residual": 10.111874208078342,
+   "sharpness": 1.2029488522901608,
+   "control": {
+    "10": 21.27204738618265,
+    "20": 28.6574597618142,
+    "40": 45.40099117860754
+   }
+  },
+  "ref_035_rotunda_Palace_of_Fine_Arts_Theatre_in_San_Francisco.jpg": {
+   "dx": 0.5,
+   "dy": 0.0,
+   "residual": 0.5,
+   "sharpness": 1.3735404757659024,
+   "control": {
+    "10": 10.0,
+    "20": 19.5,
+    "40": 39.5
+   }
+  },
+  "ref_039_rotunda_Palace_of_Fine_Arts_Presidio_San_Francisco.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.442189476318425,
+   "control": {
+    "10": 10.0,
+    "20": 20.006249023742555,
+    "40": 40.0
+   }
+  },
+  "ref_041_rotunda_Palace_of_Fine_Arts_San_Francisco_16669848394.jpg": {
+   "dx": 1.0,
+   "dy": -0.5,
+   "residual": 1.118033988749895,
+   "sharpness": 1.24928360485686,
+   "control": {
+    "10": 9.513148795220223,
+    "20": 30.14962686336267,
+    "40": 49.93245437588663
+   }
+  },
+  "ref_057_rotunda_Palace_of_Fine_Arts_29.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.380661804536478,
+   "control": {
+    "10": 10.5,
+    "20": 20.5,
+    "40": 40.5
+   }
+  },
+  "ref_058_rotunda_Palace_of_Fine_Arts_30.jpg": {
+   "dx": -0.5,
+   "dy": -1.0,
+   "residual": 1.118033988749895,
+   "sharpness": 1.2171348560109443,
+   "control": {
+    "10": 41.140004861448425,
+    "20": 21.095023109728988,
+    "40": 40.5
+   }
+  },
+  "ref_059_rotunda_Palace_of_Fine_Arts_31.jpg": {
+   "dx": -4.0,
+   "dy": -15.0,
+   "residual": 15.524174696260024,
+   "sharpness": 1.2433159709179367,
+   "control": {
+    "10": 19.912307751739878,
+    "20": 29.415132160165456,
+    "40": 42.432299018554254
+   }
+  },
+  "ref_060_rotunda_Palace_of_Fine_Arts_33.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.2663484568943277,
+   "control": {
+    "10": 9.513148795220223,
+    "20": 19.50640920313116,
+    "40": 39.528470752104745
+   }
+  },
+  "ref_062_rotunda_Palace_of_Fine_Arts_View_of_Rotunda_from_north_eas.jpg": {
+   "dx": 0.0,
+   "dy": 0.5,
+   "residual": 0.5,
+   "sharpness": 1.2944641677750037,
+   "control": {
+    "10": 25.53918557824427,
+    "20": 31.240998703626616,
+    "40": 46.4811789867684
+   }
+  },
+  "ref_063_rotunda_Palace_of_Fine_Arts_View_of_Rotunda_from_south_eas.jpg": {
+   "dx": 0.5,
+   "dy": 0.0,
+   "residual": 0.5,
+   "sharpness": 1.2252019707806268,
+   "control": {
+    "10": 17.10263137648707,
+    "20": 19.60229578391266,
+    "40": 40.078048854703496
+   }
+  },
+  "ref_064_rotunda_Palace_of_fine_arts_2006.jpg": {
+   "dx": 0.0,
+   "dy": -0.5,
+   "residual": 0.5,
+   "sharpness": 1.2251849578917722,
+   "control": {
+    "10": 10.5,
+    "20": 20.5,
+    "40": 39.5
+   }
+  },
+  "ref_065_rotunda_Palace_of_fine_arts_in_San_Francisco.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.177668746864087,
+   "control": {
+    "10": 9.5,
+    "20": 20.0,
+    "40": 25.16445906432324
+   }
+  },
+  "ref_066_rotunda_Palace_of_fine_arts_20180504.jpg": {
+   "dx": -0.5,
+   "dy": 7.5,
+   "residual": 7.516648189186454,
+   "sharpness": 1.141981182888851,
+   "control": {
+    "10": 12.90348790056394,
+    "20": 32.86715685908959,
+    "40": 40.697051490249265
+   }
+  },
+  "ref_067_rotunda_Palacio_de_Finas_Artes_San_Francisco.jpg": {
+   "dx": 0.0,
+   "dy": 0.5,
+   "residual": 0.5,
+   "sharpness": 1.250625649752853,
+   "control": {
+    "10": 10.012492197250394,
+    "20": 30.01666203960727,
+    "40": 40.44749683231337
+   }
+  },
+  "ref_070_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.297419553581741,
+   "control": {
+    "10": 10.012492197250394,
+    "20": 17.334935823359714,
+    "40": 35.92005011132362
+   }
+  },
+  "ref_071_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.2214156517855315,
+   "control": {
+    "10": 22.80350850198276,
+    "20": 32.00390601161052,
+    "40": 40.5
+   }
+  },
+  "ref_072_rotunda_Rotunda_Palace_of_Fine_Arts_San_Francisco_CA_DSC02.jpg": {
+   "dx": -0.5,
+   "dy": 2.0,
+   "residual": 2.0615528128088303,
+   "sharpness": 1.1797785191618622,
+   "control": {
+    "10": 11.067971810589327,
+    "20": 22.14158982548453,
+    "40": 56.923193866823745
+   }
+  },
+  "ref_078_rotunda_San_Francisco_34615450294.jpg": {
+   "dx": -0.5,
+   "dy": 0.0,
+   "residual": 0.5,
+   "sharpness": 1.2736358470341997,
+   "control": {
+    "10": 10.5,
+    "20": 20.0,
+    "40": 40.5
+   }
+  },
+  "ref_079_rotunda_San_Francisco_34647319243.jpg": {
+   "dx": -40.0,
+   "dy": 1.0,
+   "residual": 40.01249804748511,
+   "sharpness": 1.157160654046242,
+   "control": {
+    "10": 18.062391868188442,
+    "20": 21.592822881689184,
+    "40": 14.142135623730951
+   }
+  },
+  "ref_085_rotunda_San_Francisco_CA_USA_Palace_of_Fine_Arts_2022_0921.jpg": {
+   "dx": -0.5,
+   "dy": 0.0,
+   "residual": 0.5,
+   "sharpness": 1.4272916317301003,
+   "control": {
+    "10": 10.5,
+    "20": 20.5,
+    "40": 40.5
+   }
+  },
+  "ref_086_rotunda_San_Francisco_Palace_Of_Fine_Art.jpg": {
+   "dx": -0.5,
+   "dy": -9.0,
+   "residual": 9.013878188659973,
+   "sharpness": 1.1824280458787482,
+   "control": {
+    "10": 31.40859754907882,
+    "20": 41.188590653237945,
+    "40": 41.382363393117124
+   }
+  },
+  "ref_087_rotunda_San_Francisco_Palace_of_Fine_Arts_with_Trees_01.jpg": {
+   "dx": -1.0,
+   "dy": 2.5,
+   "residual": 2.692582403567252,
+   "sharpness": 1.2255974241229717,
+   "control": {
+    "10": 11.180339887498949,
+    "20": 21.095023109728988,
+    "40": 41.548164821084455
+   }
+  },
+  "ref_088_rotunda_San_Francisco_California3920.jpg": {
+   "dx": -2.5,
+   "dy": -9.0,
+   "residual": 9.340770846134703,
+   "sharpness": 1.2447019243919428,
+   "control": {
+    "10": 10.5,
+    "20": 20.0,
+    "40": 40.00312487793922
+   }
+  },
+  "ref_089_rotunda_Sf_exploratorium.jpg": {
+   "dx": -1.5,
+   "dy": -0.5,
+   "residual": 1.5811388300841898,
+   "sharpness": 1.2302871825907715,
+   "control": {
+    "10": 9.5,
+    "20": 11.01135777277262,
+    "40": 9.513148795220223
+   }
+  },
+  "ref_090_rotunda_The_Palace_of_Fine_Arts_San_Francisco_2013.jpg": {
+   "dx": -0.5,
+   "dy": -0.5,
+   "residual": 0.7071067811865476,
+   "sharpness": 1.2019045900846057,
+   "control": {
+    "10": 10.5,
+    "20": 42.03867267171979,
+    "40": 36.96281915655244
+   }
+  },
+  "ref_091_rotunda_The_Palace_of_Fine_Arts_and_its_lagoon_in_San_Fran.jpg": {
+   "dx": 18.0,
+   "dy": 0.5,
+   "residual": 18.006943105369107,
+   "sharpness": 1.176438044425544,
+   "control": {
+    "10": 25.144581921360317,
+    "20": 2.5495097567963922,
+    "40": 44.52246623896749
+   }
+  },
+  "ref_093_rotunda_The_rotunda_of_the_Palace_of_Fine_Arts_San_Francis.jpg": {
+   "dx": 15.0,
+   "dy": -0.5,
+   "residual": 15.008331019803634,
+   "sharpness": 1.2572912175855908,
+   "control": {
+    "10": 28.00446392988089,
+    "20": 16.0,
+    "40": 36.50342449688796
+   }
+  },
+  "ref_095_rotunda_US_CA_San_Francisco_North_America_The_West_4889277.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 2.497333957446805,
+   "control": {
+    "10": 10.0,
+    "20": 20.0,
+    "40": 40.0
+   }
+  },
+  "ref_098_main_2016_09_25_Palace_of_Fine_Arts_San_Francisco_NRHP.jpg": {
+   "dx": 0.5,
+   "dy": 0.0,
+   "residual": 0.5,
+   "sharpness": 1.2613323031881338,
+   "control": {
+    "10": 9.5,
+    "20": 20.0,
+    "40": 40.00312487793922
+   }
+  },
+  "ref_099_main_2016_09_25_Palace_of_Fine_Arts_and_fountain_San_Fr.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.3371554718692373,
+   "control": {
+    "10": 10.012492197250394,
+    "20": 20.0,
+    "40": 40.00312487793922
+   }
+  },
+  "ref_128_main_Corinthian_columns_and_rotunda_Palace_of_Fine_Arts.jpg": {
+   "dx": 0.5,
+   "dy": -1.0,
+   "residual": 1.118033988749895,
+   "sharpness": 1.201139747511268,
+   "control": {
+    "10": 10.012492197250394,
+    "20": 26.627053911388696,
+    "40": 29.53811097548386
+   }
+  },
+  "ref_133_main_Exploratorium_dyeclan_com_panoramio.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.224971110806942,
+   "control": {
+    "10": 10.0,
+    "20": 20.0,
+    "40": 40.0
+   }
+  },
+  "ref_135_main_Fountain_322090800.jpg": {
+   "dx": NaN,
+   "dy": NaN,
+   "residual": NaN,
+   "sharpness": 0.0,
+   "control": {
+    "10": NaN,
+    "20": NaN,
+    "40": NaN
+   }
+  },
+  "ref_139_main_Gushing_lagoon_Palace_of_Fine_Arts_San_Francisco_4.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.359193404114302,
+   "control": {
+    "10": 11.01135777277262,
+    "20": 20.506096654409877,
+    "40": 40.0
+   }
+  },
+  "ref_140_main_Gushing_lagoon_Palace_of_Fine_Arts_San_Francisco.jpg": {
+   "dx": 1.0,
+   "dy": 0.0,
+   "residual": 1.0,
+   "sharpness": 1.2097266917706955,
+   "control": {
+    "10": 9.5,
+    "20": 20.796634343085422,
+    "40": 40.19950248448356
+   }
+  },
+  "ref_141_main_Heritage_Art_Museum_in_California.jpg": {
+   "dx": -1.0,
+   "dy": 0.0,
+   "residual": 1.0,
+   "sharpness": 1.259859750940859,
+   "control": {
+    "10": 10.0,
+    "20": 20.0,
+    "40": 41.0
+   }
+  },
+  "ref_144_main_Lagoon_Palace_of_Fine_Arts_San_Francisco_CA_DSC024.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.1989251358182464,
+   "control": {
+    "10": 9.617692030835672,
+    "20": 19.5,
+    "40": 40.01249804748511
+   }
+  },
+  "ref_145_main_Lagoon_Palace_of_Fine_Arts_San_Francisco_CA_DSC024.jpg": {
+   "dx": -0.5,
+   "dy": -2.0,
+   "residual": 2.0615528128088303,
+   "sharpness": 1.3338264974029381,
+   "control": {
+    "10": 11.543396380615196,
+    "20": 21.552262062252307,
+    "40": 42.04759208325728
+   }
+  },
+  "ref_148_main_Marina_District_San_Francisco_CA_USA_panoramio_10.jpg": {
+   "dx": 0.5,
+   "dy": -0.5,
+   "residual": 0.7071067811865476,
+   "sharpness": 1.3236732467830346,
+   "control": {
+    "10": 10.012492197250394,
+    "20": 20.006249023742555,
+    "40": 40.00312487793922
+   }
+  },
+  "ref_149_main_Marina_District_San_Francisco_CA_USA_panoramio_12.jpg": {
+   "dx": 0.5,
+   "dy": -11.5,
+   "residual": 11.510864433221338,
+   "sharpness": 1.1991436183980795,
+   "control": {
+    "10": 12.5,
+    "20": 20.402205763103165,
+    "40": 40.697051490249265
+   }
+  },
+  "ref_150_main_Marina_District_San_Francisco_CA_USA_panoramio_2.jpg": {
+   "dx": 0.5,
+   "dy": 0.0,
+   "residual": 0.5,
+   "sharpness": 1.1481076867808087,
+   "control": {
+    "10": 40.00312487793922,
+    "20": 30.516389039334257,
+    "40": 17.564168070250297
+   }
+  },
+  "ref_151_main_Marina_District_San_Francisco_CA_USA_panoramio_3.jpg": {
+   "dx": -28.0,
+   "dy": 2.5,
+   "residual": 28.111385593741193,
+   "sharpness": 1.0967627974000582,
+   "control": {
+    "10": 21.592822881689184,
+    "20": 16.3783393541592,
+    "40": 37.04726710568541
+   }
+  },
+  "ref_152_main_Marina_District_San_Francisco_CA_USA_panoramio_4.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.3825275515886866,
+   "control": {
+    "10": 10.0,
+    "20": 19.5,
+    "40": 40.00312487793922
+   }
+  },
+  "ref_154_main_Marina_District_San_Francisco_CA_USA_panoramio_6.jpg": {
+   "dx": -5.5,
+   "dy": 34.5,
+   "residual": 34.935655139126844,
+   "sharpness": 1.244727385220478,
+   "control": {
+    "10": 11.0,
+    "20": 20.506096654409877,
+    "40": 41.0
+   }
+  },
+  "ref_156_main_Marina_District_San_Francisco_CA_USA_panoramio_8.jpg": {
+   "dx": -2.0,
+   "dy": -1.5,
+   "residual": 2.5,
+   "sharpness": 1.341258060544261,
+   "control": {
+    "10": 11.597413504743201,
+    "20": 17.507141400011598,
+    "40": 41.027429848821875
+   }
+  },
+  "ref_158_main_Marina_District_San_Francisco_CA_USA_panoramio.jpg": {
+   "dx": 1.0,
+   "dy": 0.5,
+   "residual": 1.118033988749895,
+   "sharpness": 1.198688319417103,
+   "control": {
+    "10": 9.12414379544733,
+    "20": 19.00657780874821,
+    "40": 38.51298482330343
+   }
+  },
+  "ref_161_main_Maybeck_Fine_Arts_Palace_3.jpg": {
+   "dx": 0.5,
+   "dy": 3.5,
+   "residual": 3.5355339059327378,
+   "sharpness": 1.2497978252844606,
+   "control": {
+    "10": 10.124228365658293,
+    "20": 20.5,
+    "40": 39.702015062210634
+   }
+  },
+  "ref_164_main_PALACE_OF_FINE_ARTS.jpg": {
+   "dx": 10.5,
+   "dy": 0.0,
+   "residual": 10.5,
+   "sharpness": 1.2096116128324526,
+   "control": {
+    "10": 4.6097722286464435,
+    "20": 40.50308630215727,
+    "40": 40.5
+   }
+  },
+  "ref_169_main_Palace_of_Fine_Arts_16794p.jpg": {
+   "dx": 23.0,
+   "dy": -4.0,
+   "residual": 23.345235059857504,
+   "sharpness": 1.1751449559683251,
+   "control": {
+    "10": 13.601470508735444,
+    "20": 5.0,
+    "40": 17.46424919657298
+   }
+  },
+  "ref_170_main_Palace_of_Fine_Arts_322090718.jpg": {
+   "dx": 15.0,
+   "dy": 2.5,
+   "residual": 15.20690632574555,
+   "sharpness": 1.257067153121934,
+   "control": {
+    "10": 9.055385138137417,
+    "20": 18.527007313648905,
+    "40": 39.01281840626232
+   }
+  },
+  "ref_171_main_Palace_of_Fine_Arts_9331688296.jpg": {
+   "dx": 0.5,
+   "dy": 0.0,
+   "residual": 0.5,
+   "sharpness": 1.3000667452488759,
+   "control": {
+    "10": 10.5,
+    "20": 20.0,
+    "40": 40.5
+   }
+  },
+  "ref_174_main_Palace_of_Fine_Arts_March_2018_1464.jpg": {
+   "dx": 1.0,
+   "dy": 0.0,
+   "residual": 1.0,
+   "sharpness": 1.3267364804653792,
+   "control": {
+    "10": 9.513148795220223,
+    "20": 19.50640920313116,
+    "40": 40.5
+   }
+  },
+  "ref_175_main_Palace_of_Fine_Arts_March_2018_1468.jpg": {
+   "dx": 0.0,
+   "dy": 0.5,
+   "residual": 0.5,
+   "sharpness": 1.3687128956671262,
+   "control": {
+    "10": 10.012492197250394,
+    "20": 20.0,
+    "40": 38.50324661635691
+   }
+  },
+  "ref_176_main_Palace_of_Fine_Arts_March_2018_1476.jpg": {
+   "dx": 0.0,
+   "dy": 0.0,
+   "residual": 0.0,
+   "sharpness": 1.2525967510532598,
+   "control": {
+    "10": 17.0,
+    "20": 19.5,
+    "40": 27.04163456597992
+   }
+  },
+  "ref_177_main_Palace_of_Fine_Arts_March_2018_1480.jpg": {
+   "dx": 0.0,
+   "dy": -0.5,
+   "residual": 0.5,
+   "sharpness": 1.2935374587736785,
+   "control": {
+    "10": 10.51189802081432,
+    "20": 20.506096654409877,
+    "40": 40.50308630215727
+   }
+  }
+ }
+}
