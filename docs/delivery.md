@@ -263,3 +263,26 @@ water reflector not session-reproducible (A/A mask rule); the Phase 8 Cycles ref
 Station 2 frieze/soffit over-warm and the shafts' a* deficit (MATERIALS; accepted residual); cam03 near_column 1.4x red (BAKE/MATERIALS); far-crown deviation 7.5 -> 9.6 % at two
 boxes after the full far-tree re-bake (BAKE/EXPORT; QA 23 residual 1 partially re-opened); cam05 shade p10 −5.9 % vs Cycles with the gate on (VIEWER; ungated +6.8 %); frame rate
 22-37 fps at the stations, never measured idle (perf re-take); cam01/cam05 backdrop bands −1..3 % hf after R3 (ENV, named); the 4.3x hf gap to the photo at cam06 is the R1 ceiling; cycles_p9/cam06 predates ENV R3 (re-render before any station-6 parity claim); the colonnade-deck dark band at 4K (ARCH/LIGHT); scripts/build_master.py APPENDS, CLAUDE.md's "by linking" is stale (user to amend).
+
+# Phase 10 — photo-derived appearance on the existing mesh (lead, 2026-09-24; decisions.md 2026-09-24 x6; QA 27: PENDING, fill on the verdict)
+## Deliverables
+- master.blend rebuilt with Phase 10 (ENV r1 ea12906, ENV r2 fea53a2, projection e4116b8 at weight 0, materials r2: PENDING merge id); the six Cycles stations in
+  renders/qa_comparisons/cycles_p10/ (scripts/p10_cycles_refs.sh); QA 27 report docs/qa_round_27.md; sheets env_p10_sheet.png, env_p10r2_sheet.png, mat_p10_sheet.png,
+  mat_p10w_sheet.png, round27_gate.png.
+- Infrastructure kept for a future round: the `UVBake` atlas layer on 37 rotunda meshes (arch_uvbake.py, wired into arch_build.py), the registration + projection +
+  delighting pipeline (scripts/mat_p10_*.py, mat_p10_step2.sh, assets/textures/projection2/ with cameras.json and evidence/), the integrate post-step (weight 0 = no-op).
+## What changed
+- ENV r1: two columnar cypresses on the peninsula shore close the sky right of the rotunda (crown top 411 px vs ref 398; sky 45.8 % vs ref 34.8, dark 23.6 vs 15.2: colour);
+  willow drape denser; leaf cards larger; tris +6.4 / +8.3 / +1.9 %.
+- ENV r2: hero-shore willow to ref 169's footprint (5.4 m, 1.7x wide: box 19.1 % / row 607 vs ref 21.7 % / 604), an added willow in the pale-crown slot, the second willow
+  lowered so the central arch opening is uncovered (2,065 -> 0 px); tris +0.9 / +1.3 / +0.5 % more.
+- Projection r1: shelved at weight 0. Registration failed its held-out test (20.4 px median; 40 of 43 cameras behind the east shore); visible effect had been confined to
+  the column shafts. Column tint carried into materials r2 as a plain retune.
+- Materials r2 (water murk / reflection breakup, foliage colour, column tint): PENDING.
+## Known issues (owners), carried
+Registration needs a per-image scale solve (PnP from >= 6 hand picks) or a controlled site capture (option C) before the atlas can be raised above weight 0 (MATERIALS/user);
+ORN attic reliefs, frieze and drum band have no UVBake layer so no projection can reach them (ORN); the colonnade is uncovered (MATERIALS); a fresh ARCH build re-lays 4
+ornament courses so the atlas hashes are advisory in the rebuild hook (ARCH); ENV shadow / frame gates size crowns at CROWN_R while the widened willow is 2.4x that, and the
+widening is keyed on the note text (ENV); willow_03 crown may reach 36.7 m vs the 37 m podium ring (ENV, accepted); cam02 shows the new columns over the rotunda's left base
+(QA 27 scores it); export needs an impostor rebake and new EXPM_*_LOD1_thin rows before any web deploy (EXPORT); NE-box sky/dark shares and box 2 depend on the leaf colour
+(materials r2 measures).
