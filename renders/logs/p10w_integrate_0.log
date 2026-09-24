@@ -1,0 +1,11 @@
+00:00.340  blend            | Read blend: "/Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/assets/materials.blend"
+[p10int] round-9 mix node Mix.017 (ShaderNodeMix); base from Vector Math.027
+[p10int] round-9 removal: tied
+[p10int] PFA_concrete: atlas wired (weight 0.0); materials using the group: ['MAT_backdrop_building', 'MAT_column_rose', 'MAT_column_tan_inner', 'MAT_concrete_colonnade', 'MAT_concrete_inner', 'MAT_concrete_ochre', 'MAT_concrete_podium', 'MAT_drum_band', 'MAT_ornament_concrete', 'MAT_paving', 'MAT_paving_stone', 'MAT_paving_stone_worn', 'MAT_plaster_ceiling', 'MAT_plaster_ceiling_rib']
+Info: Saved as "materials.blend"
+[common] saved /Users/dk/Projects/3d render blender 3rd attempt building/.claude/worktrees/phase10-water/assets/materials.blend
+[p10int] saved assets/materials.blend
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
+
+Blender quit
+blender_run.sh: pid 25154 exited rc=0 after 2 s (max 600)

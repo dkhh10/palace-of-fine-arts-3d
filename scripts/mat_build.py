@@ -815,6 +815,13 @@ def C(r, g, b):
     return (r, g, b, 1.0)
 
 
+COL_VALUE = 1.22      # Phase 10 r2: MAT_column_rose albedo scale (see the material)
+
+
+def CV(r, g, b):
+    return (r * COL_VALUE, g * COL_VALUE, b * COL_VALUE, 1.0)
+
+
 def build_concrete_family():
     # Round-3 (QA-02-2/-3/-14) changes across the family:
     #  - Base Color hue pushed +4 to +8 deg toward the reference ochre (ref 169 sunlit stone sits at 34-39 deg).
@@ -923,7 +930,10 @@ def build_concrete_family():
     # value falls only 6 %, so the remaining 1.27x brightness stays where round 4 put it: the entablature's shadow
     # (lighting). `Tone Variation` and the macro layer supply the "strong tonal variation" the sheet describes.
     concrete_material("MAT_column_rose", "concrete_wall_008", 6.0, {
-        "Base Color": C(0.298, 0.1385, 0.079), "Grey Color": C(0.284, 0.175, 0.098), "Grey Drift": 0.26,
+        # PHASE 10 r2 (the projection retune at weight 0): albedo x COL_VALUE (with scripts/mat_p10_integrate.py
+        # --col-sat 0.68 --col-hue -10).  At x1.35 / sat 0.70 the QA column mask measured 114.4 / 28.6 / 0.606 against
+        # ref 169's 96.8 / 24.8 / 0.585 (before 73.5 / 28.9 / 0.700): hue and sat in the window, lum overshooting, so 1.22.
+        "Base Color": CV(0.298, 0.1385, 0.079), "Grey Color": CV(0.284, 0.175, 0.098), "Grey Drift": 0.26,
         "Grey Below Z": -100.0, "Grey Above Z": -99.0, "Tone Variation": 0.34, "Block Size": 3.2, "Blotch Size": 1.1,
         "Drift Size": 4.5,
         "Detail Strength": 0.70, "Streaks": 0.50, "Streak Scale": 4.0, "Streak Length": 8.0, "Ledge Distance": 1.5, "Ledge Weight": 0.4,
@@ -933,7 +943,7 @@ def build_concrete_family():
         "Patches": 0.0, "Edge Wear": 0.85, "Edge Radius": 0.045,
         "Recess Dirt": 0.65, "Recess Distance": 0.30, "Cavity": 0.95, "Roughness": 0.72, "Roughness Variation": 0.1, "Bump": 0.3, "Pour Lines": 0.0},
         specular=0.20,
-        column={"Wash Color": C(0.372, 0.246, 0.172), "Wash": 0.60, "Drum Height": 3.25, "Drum Variation": 0.13, "Top Z": 16.3, "Top Darkening": 0.40})
+        column={"Wash Color": CV(0.372, 0.246, 0.172), "Wash": 0.60, "Drum Height": 3.25, "Drum Variation": 0.13, "Top Z": 16.3, "Top Darkening": 0.40})
     # the 8 inner tan columns (and their blocks)
     concrete_material("MAT_column_tan_inner", "concrete_wall_008", 7.0, {
         "Base Color": C(0.565, 0.428, 0.032), "Grey Color": C(0.442, 0.360, 0.058), "Grey Drift": 0.16,
@@ -1144,13 +1154,41 @@ def build_water():
     near = t.maprange(depth, 95.0, 9.0, 0.0, 1.0)
     # anisotropy: crests run longer along X (across the hero view), so the reflection breaks into vertical streaks.
     # v3 used 0.33 (3x elongation), which is what made the near-field runs so long; 0.5 keeps the character.
-    Pa = t.combxyz(t.mul(wx, 0.36), wy, 0.0)
+    # Phase 10 r2: the X stretch is a named node so scripts/mat_p10w_sweep.py can address it (see the r2 note below).
+    Pa = t.combxyz(t.mul(wx, t.value(0.8, "WATER_ANISO_X")), wy, 0.0)
     Ps = t.combxyz(t.mul(wx, 0.55), wy, 0.0)
     h1 = t.noise(Pa, 3.3, detail=3, rough=0.55, w=t.mul(time, 1.0))          # 0.3 m ripples
     h2 = t.noise(Ps, 0.33, detail=2, rough=0.5, w=t.mul(time, 0.3))          # 3 m swell
     h3 = t.noise(Pa, 9.0, detail=2, rough=0.5, w=t.mul(time, 1.7))           # 0.1 m capillary
     h4 = t.noise(Pa, 24.0, detail=2, rough=0.5, w=t.mul(time, 2.4))          # 0.04 m near-field chop
-    h = t.add(t.add(t.mul(h1, 0.6), h2), t.add(t.mul(h3, t.madd(near, 0.28, 0.18)), t.mul(h4, t.mul(near, 0.13))))
+    # Phase 10 r2: `fine` scales the 0.3 m ripple and the capillaries inside the wave band only (WATER_FINE 1 = shipped).
+    wave_band = t.mul(t.maprange(depth, 10.0, 16.0, 0.0, 1.0), t.maprange(depth, 80.0, 160.0, 1.0, 0.0))
+    fine = t.sub(1.0, t.mul(wave_band, t.sub(1.0, t.value(0.5, "WATER_FINE"))))
+    hf = t.add(t.mul(h1, 0.6), t.add(t.mul(h3, t.madd(near, 0.28, 0.18)), t.mul(h4, t.mul(near, 0.13))))
+    h = t.add(t.mul(hf, fine), h2)
+    # PHASE 10 r2 (brief docs/briefs/phase10_water.md item 1, ref 169's "short horizontal streaks with dark gaps"): a
+    # wind-wave layer at ~0.7 m, smooth (one octave), nearly isotropic, in the 12-120 m band that carries the
+    # reflection.  The existing ripple is 0.3 m with three octaves, i.e. 1-3 px per crest at the reflection box's 23 m
+    # and 82.7 deg incidence, so every pixel AVERAGES several facets and the mirror comes back as a smooth vertical
+    # smear; a crest several pixels tall is what lets each pixel see ONE facet, pitched either at the sunlit stone or
+    # down at the dark water -- bright streak or dark gap -- and its roll is what makes ref 169's reflection edges zig-zag.
+    # `WATER_WAVE_AMP` 0 with WATER_FINE 1 and WATER_ANISO_X 0.36 is bit-identical to round 9b.
+    # SWEPT (scripts/mat_p10w_sweep.py, 12 bordered cases in 4 passes, Cycles 64 spp, rows 740-1080; box 900 760 1020 840;
+    # Lx/Ly = lag where the row/column luminance autocorrelation falls to 0.5, aniso = sd(col means)/sd(row means),
+    # cv = sd/mean, dark = share of pixels < 0.6 x mean; scripts/mat_p10w_measure.py; table in docs/materials_notes.md):
+    #   case                              lum    R-B    Lx    aspect  aniso  cv     dark
+    #   shipped (aniso .36)               118.3  +24.0  12.0  14.1    11.5   0.309  15.6 %
+    #   aniso 1.0 (isotropic ripple)      120.3  +24.0   6.1   7.2     5.7   0.225   5.6 %
+    #   + wave amp 2 @1.4                 121.7  +30.4   7.7   8.1     3.7   0.221   4.2 %
+    #   + fine 0.5                        127.4  +14.6  11.5   8.6     3.5   0.318  15.7 %
+    #   SHIPPED: wave 3.5 @1.8, fine .5   116.9  +47.0   6.9   6.3     2.25  0.303   9.5 %
+    #   ref 169                           162.1  +77.2   7.9   7.05    2.36  0.312  16.2 %
+    # The fine ripple was what aimed the mirror up at the sunlit upper rotunda (round 8's pitch finding) and what blurred
+    # it: taking half of it out restores the contrast and loses the warmth (R-B +14.6); the wave then puts the pitch back
+    # with facets several pixels tall, so the warm streaks and the dark gaps are separate pixels, not an average.
+    Pw = t.combxyz(t.mul(wx, t.value(0.8, "WATER_WAVE_ANISO")), wy, 0.0)
+    hw = t.noise(Pw, t.value(1.8, "WATER_WAVE_SCALE"), detail=1, rough=0.4, w=t.mul(time, 0.5))
+    h = t.add(h, t.mul(t.sub(hw, 0.5), t.mul(wave_band, t.value(3.5, "WATER_WAVE_AMP"))))
     # calmer patches (wind shadow) so the reflection is glassy in places
     # ROUND 8 tried dropping the calm floor 0.45 -> 0.20, on the argument that the slope sweep flattened the
     # water's spatial contrast as it warmed it (box std 52.0 -> 25.5 -> 18.4 from dist 0.03 to 0.22) while ref
@@ -1230,7 +1268,13 @@ def build_water():
     # what the 54 % of the reflection box that is NOT mirror returns; a neutral murk under lighting's blue sky
     # returns blue and fights the warm streaks, a green-ochre one returns near-neutral (albedo R/B 1.63 against
     # the sky's E_B/E_R ~1.4) and adds luminance without taking R-B back.
-    murk = t.mix(murk_far, C(0.155, 0.160, 0.095), C(0.175, 0.180, 0.110))
+    # PHASE 10 r2: the round-8 murk (0.155,0.160,0.095)/(0.175,0.180,0.110) -> a greener olive with little blue, and
+    # the near gain 0.15 -> 0.70 (WATER_MURK_GAIN below).  A low-blue murk under the blue sky is no longer a blue
+    # lambertian: added to the sky mirror it raises G against B, i.e. moves the open water from sky-blue toward ref
+    # 169's teal (near water hue 204.3 -> 197.2, ripples 201.8 -> 190.1; ref 187.4 / 177.9), at +8.7 lum (window 79-131)
+    # and -0.016 of saturation.  Swept with an olive (0.170,0.150,0.055) and a green-olive (0.150,0.160,0.050) at gains
+    # 0.45 / 0.8: hue moves with G-B and gain, the reflection box's R-B does not pay for it.
+    murk = t.mix(murk_far, C(0.140, 0.170, 0.045), C(0.160, 0.190, 0.055))
     murk.node.name = murk.node.label = "WATER_MURK"        # addressed by scripts/mat_r7_sweep.py
     # ROUND 7, and this is the measured answer to lighting r12's hand-off 1 (which asked for a third of the murk's
     # CHROMA). The round-7 sweep (mat_r7_sweep.py, 9 cases on one master, docs/materials_notes.md) scaled the murk
@@ -1263,7 +1307,7 @@ def build_water():
     # box therefore keeps round 7's 0.15 exactly, and the ramp is pushed out to the 30-90 m band that only cam05's
     # lagoon and cam06's aerial see, where the water is far from grazing, no reflection test is scored on it, and
     # the murk is the whole reason QA-02-6's lagoon does not read black.
-    murk = t.vscale(murk, t.mul(murk_w, t.maprange(depth, 30.0, 90.0, 0.15, 1.00, name="WATER_MURK_GAIN")))
+    murk = t.vscale(murk, t.mul(murk_w, t.maprange(depth, 30.0, 90.0, 0.70, 1.00, name="WATER_MURK_GAIN")))
     bsdf = t.principled(**{"Base Color": murk, "Roughness": rough, "IOR": 1.333, "Transmission Weight": 0.18,
                            "Specular IOR Level": 0.5, "Normal": normal,
                            "Sheen Weight": 0.0, "Sheen Roughness": 0.35,
@@ -1367,7 +1411,8 @@ def foliage_image(name, data=False):
 
 
 def leaf_material(name, texture, translucent, rough=0.55, hue_var=0.05, val_var=0.3, seed=20.0, spec=0.3, translucency=0.3,
-                  sheen=0.15, tint=(1.0, 1.0, 1.0), alpha_cut=0.5, cluster_var=0.2, nrm_strength=0.6):
+                  sheen=0.15, tint=(1.0, 1.0, 1.0), alpha_cut=0.5, cluster_var=0.2, nrm_strength=0.6,
+                  grade_sat=1.0, grade=(1.0, 1.0, 1.0)):
     """Alpha-cut, two-sided, translucent card material on a generated RGBA foliage texture (UV map 'UVMap').
     Per-tree hue/value variation from Object Info Random, cluster-scale variation from object-space noise."""
     m = ML.new_material(name)
@@ -1382,6 +1427,9 @@ def leaf_material(name, texture, translucent, rough=0.55, hue_var=0.05, val_var=
     hue = t.madd(t.sub(inst.outputs["R2"], 0.5), hue_var, 0.5)
     val = t.madd(t.sub(inst.outputs["R3"], 0.5), val_var, 1.0)
     c = t.vmul(tex.outputs["Color"], tint)
+    # Phase 10 r2 grade (named so scripts/mat_p10w_sweep.py can address it): saturation, then a per-channel gain.
+    c = t.hsv(c, sat=t.value(grade_sat, "LEAF_SAT"))
+    c = t.vmul(c, t.rgb(grade, "LEAF_GRADE"))
     c = t.hsv(c, hue=hue, val=val)
     cl = t.maprange(t.noise(P, 1.2, detail=2), 0.3, 0.7, 1.0 - cluster_var, 1.0 + cluster_var)
     c = t.vscale(c, cl)
@@ -1998,12 +2046,25 @@ def build_all_materials():
     build_concrete_family()
     build_dome()
     build_water()
-    leaf_material("MAT_leaf_cypress", "needles_cypress", (0.9, 1.1, 0.5), rough=0.6, hue_var=0.05, val_var=0.35, seed=20.0, translucency=0.25, alpha_cut=0.45)
+    # PHASE 10 r2 (ENV r1 hand-off, docs/briefs/phase10_water.md addendum 1): the conifer mass measured (62,56,15) luma 53 B/G
+    # 0.27 against ref 169's (114,109,84) luma 108 B/G 0.77 (scripts/mat_p10w_measure.py, box 1s non-sky pixels) -- a
+    # stop and more too dark and far too yellow.  Measured sweep (docs/materials_notes.md "Phase 10 r2"): the B/G target
+    # is reachable ONLY with a blue albedo -- case j1 (saturation x0.20, gain (2.6, 3.4, 7.0) = linear albedo
+    # 0.21/0.30/0.53) lands the box at luma 103.7 / B/G 0.66 and renders the conifers LAVENDER from above (cam06).
+    # Shipped: an olive-grey albedo (B < G, R < G; cypress ~0.21/0.30/0.23 linear), the transmitted blue partly restored
+    # (translucent B 0.5 -> 0.8; the old tint halved the only blue a backlit needle has) and the waxy needle's sky
+    # specular (IOR level 0.3 -> 0.55, sheen 0.15 -> 0.3): luma about +1 stop to ~100, B/G ~0.37 (ref 0.77, reported).
+    CON = dict(grade_sat=0.35, grade=(2.9, 3.4, 3.3), sheen=0.3)
+    leaf_material("MAT_leaf_cypress", "needles_cypress", (0.9, 1.1, 0.8), rough=0.6, hue_var=0.05, val_var=0.35, seed=20.0, translucency=0.25, alpha_cut=0.45,
+                  spec=0.55, **CON)
     # conifers other than cypress (Monterey pine, redwood): darker, bluer, longer needles -- ENV maps pines here
-    leaf_material("MAT_leaf_pine", "needles_pine", (0.7, 0.95, 0.5), rough=0.55, hue_var=0.04, val_var=0.28, seed=27.0,
-                  translucency=0.18, spec=0.35, tint=(0.80, 0.92, 0.78), alpha_cut=0.42, nrm_strength=0.5)
+    leaf_material("MAT_leaf_pine", "needles_pine", (0.7, 0.95, 0.8), rough=0.55, hue_var=0.04, val_var=0.28, seed=27.0,
+                  translucency=0.18, spec=0.55, tint=(0.80, 0.92, 0.78), alpha_cut=0.42, nrm_strength=0.5, **CON)
     leaf_material("MAT_leaf_eucalyptus", "leaves_eucalyptus", (0.8, 1.0, 0.5), rough=0.42, hue_var=0.06, val_var=0.3, seed=21.0, spec=0.4, translucency=0.3)
-    leaf_material("MAT_leaf_broadleaf", "leaves_broadleaf", (0.8, 1.2, 0.4), rough=0.5, hue_var=0.07, val_var=0.35, seed=22.0, translucency=0.35)
+    # the willows (and ENV's generic broadleaf) -- same hand-off, a gentler grade: ref 169's willow is sunlit yellow-green
+    # (174,159,85) B/G 0.53, not grey; an albedo kept yellow-green (B < G), between sweep cases m1 and m2.
+    leaf_material("MAT_leaf_broadleaf", "leaves_broadleaf", (0.8, 1.2, 0.7), rough=0.5, hue_var=0.07, val_var=0.35, seed=22.0, translucency=0.35,
+                  spec=0.45, sheen=0.25, grade_sat=0.55, grade=(3.0, 3.0, 2.8))
     # QA-05-10 / ENV r7 hand-off: the hero shore band measured lum 91.1 against ref 169's 115.6 at sat 0.487
     # against the photo's 0.663 -- so this round can spend BOTH, and the cheapest lum with the least saturation
     # cost is translucency: a backlit leaf is lighter and less chromatic than the same leaf lit from the front.
