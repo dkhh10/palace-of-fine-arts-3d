@@ -360,7 +360,11 @@ PLAN = [
     # as is for every other willow) and widened x1.7 in X/Y (P10R2_WIDEN: x1.4 rendered 126 px wide vs ref 159) to keep the photo's width; moved 2.5 m
     # north to put the trunk at frame x 0.401 (ref's centre 0.401).  Gates: env_p10r2_plan.py --check.
     ("willow", 4.4, 43.4, 5.4, "P hero-shore willow, ref 169 x 0.36-0.44; p10r2 (6.9,43.4) h9 -> here h5.4 w1.7 (ref crown-top row 604)"),
-    ("willow", -2.6, 45.9, 8.5, "P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here, ships x 0.423-0.500"),
+    # Phase 10 r2 (lead item): at 8.5 m (relief 7 m) this crown covered 2,065 px of the central arch opening (rows
+    # 561-614), where ref 169 shows the urn and pedestal.  The opening's sill (PODIUM_TOP_Z 4.3 m on the lagoon face)
+    # projects to row ~614; from this trunk (d 55 m) a crown top below it must stay under z ~3.4 m, so this ONE
+    # instance is planted at 4.0 m, a low curtain at the water (same spot, species window unchanged for the rest).
+    ("willow", -2.6, 45.9, 4.0, "P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here; p10r2 8.5 -> 4.0 m (central arch opening 2,065 -> 0 px)"),
     ("willow", -12.0, 44.0, 9.0, "P hero-shore willow, ref 169 x 0.56-0.64; r9r LAND 45 -> 44, ships x 0.517-0.598"),
     # A2. strip between the north wing and the embayment (3-13 m wide per OSM, canopy overhangs both).
     #   ROUND 8, re-derived from ref 169 through the cam-01 projection (scripts/env_r8_fit.py --solve).  The three

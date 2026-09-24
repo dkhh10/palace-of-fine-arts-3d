@@ -150,7 +150,7 @@ The tool is new this round, so there is no pre-round baseline; these are the thr
 | 12 | willow | 18 | 40 | 7 | P low willow at the water, left (cam01 x 0.24-0.30) |
 | 13 | broadleaf | 35 | 20 | 6 | P peninsula bed, ships x 0.245-0.277; r9 QA-02-13 ring, r9r +0.5 m out so the ring is cleared, not touched |
 | 14 | willow | 4 | 43 | 5 | P hero-shore willow, ref 169 x 0.36-0.44; p10r2 (6.9,43.4) h9 -> here h5.4 w1.7 (ref crown-top row 604) |
-| 15 | willow | -3 | 46 | 7 | P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here, ships x 0.423-0.500 |
+| 15 | willow | -3 | 46 | 4 | P hero-shore willow, ref 169 x 0.44-0.52 (right of the stair); r9r LAND (-1.5,47.0) -> here; p10r2 8.5 -> 4.0 m (central arch opening 2,065 -> 0 px) |
 | 16 | willow | -12 | 44 | 8 | P hero-shore willow, ref 169 x 0.56-0.64; r9r LAND 45 -> 44, ships x 0.517-0.598 |
 | 17 | cypress_column | -38 | -20 | 22 | A2 tall column right of the rotunda (user image x~1020); r9 QA-02-13 ring, r9r LAND+ring, ships x 0.668-0.719 |
 | 18 | pine | -60 | -31 | 13 | A2 strip along the north wing, r+8 (ref 169: crown over the cornice, x 0.79) |
