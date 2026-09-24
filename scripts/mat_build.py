@@ -1151,7 +1151,11 @@ def build_water():
     h2 = t.noise(Ps, 0.33, detail=2, rough=0.5, w=t.mul(time, 0.3))          # 3 m swell
     h3 = t.noise(Pa, 9.0, detail=2, rough=0.5, w=t.mul(time, 1.7))           # 0.1 m capillary
     h4 = t.noise(Pa, 24.0, detail=2, rough=0.5, w=t.mul(time, 2.4))          # 0.04 m near-field chop
-    h = t.add(t.add(t.mul(h1, 0.6), h2), t.add(t.mul(h3, t.madd(near, 0.28, 0.18)), t.mul(h4, t.mul(near, 0.13))))
+    # Phase 10 r2: `fine` scales the 0.3 m ripple and the capillaries inside the wave band only (WATER_FINE 1 = shipped).
+    wave_band = t.mul(t.maprange(depth, 10.0, 16.0, 0.0, 1.0), t.maprange(depth, 80.0, 160.0, 1.0, 0.0))
+    fine = t.sub(1.0, t.mul(wave_band, t.sub(1.0, t.value(1.0, "WATER_FINE"))))
+    hf = t.add(t.mul(h1, 0.6), t.add(t.mul(h3, t.madd(near, 0.28, 0.18)), t.mul(h4, t.mul(near, 0.13))))
+    h = t.add(t.mul(hf, fine), h2)
     # PHASE 10 r2 (brief docs/briefs/phase10_water.md item 1, ref 169's "short horizontal streaks with dark gaps"): a
     # wind-wave layer at ~0.7 m, smooth (one octave), nearly isotropic, in the 12-120 m band that carries the
     # reflection.  The existing ripple is 0.3 m with three octaves, i.e. 1-3 px per crest at the reflection box's 23 m
@@ -1159,7 +1163,6 @@ def build_water():
     # smear; a crest several pixels tall is what lets each pixel see ONE facet, pitched either at the sunlit stone or
     # down at the dark water -- bright streak or dark gap -- and its roll is what makes ref 169's reflection edges zig-zag.
     # `WATER_WAVE_AMP` 0 is bit-identical to round 9b; swept by scripts/mat_p10w_sweep.py.
-    wave_band = t.mul(t.maprange(depth, 10.0, 16.0, 0.0, 1.0), t.maprange(depth, 80.0, 160.0, 1.0, 0.0))
     Pw = t.combxyz(t.mul(wx, t.value(0.8, "WATER_WAVE_ANISO")), wy, 0.0)
     hw = t.noise(Pw, t.value(1.4, "WATER_WAVE_SCALE"), detail=1, rough=0.4, w=t.mul(time, 0.5))
     h = t.add(h, t.mul(t.sub(hw, 0.5), t.mul(wave_band, t.value(0.0, "WATER_WAVE_AMP"))))

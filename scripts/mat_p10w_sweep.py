@@ -64,9 +64,25 @@ FOLIAGE2 = [  # sat, grade, translucent B, Specular IOR Level, Roughness (None =
     ("g4", dict(sat=0.25, grade=(3.6, 3.6, 6.0), trb=1.0, spec=1.0, rough=0.4, sheen=0.8)),
 ]
 COLUMN2 = [("k1", -10.0, 0.70, 1.35), ("k2", -14.0, 0.72, 1.35), ("k3", -10.0, 0.66, 1.45)]
-SET2 = "--set" in args and args[args.index("--set") + 1] == "2"
-if SET2:
+# ---- sweep 3 (after reading sweep 2): fine ripple down inside the wave band, a greener murk, per-material leaves --
+GR_A, GR_B = (0.140, 0.170, 0.045), (0.160, 0.190, 0.055)          # green murk (more chroma than GO)
+CON = ("MAT_leaf_cypress", "MAT_leaf_pine")
+BRO_1 = dict(sat=0.55, grade=(2.6, 2.8, 3.4), trb=0.6, spec=0.4)
+WATER3 = [
+    ("x1", dict(aniso=0.8, amp=2.0, wscale=1.4, fine=0.5, murk=(GR_A, GR_B), gain=0.7)),
+    ("x2", dict(aniso=0.8, amp=2.0, wscale=1.4, fine=0.5, murk=(GR_A, GR_B), gain=0.7, far=0.21)),
+]
+FOLIAGE3 = [
+    ("h1", {CON: dict(sat=0.30, grade=(2.8, 3.4, 5.6), trb=0.9, spec=0.6, sheen=0.3), ("MAT_leaf_broadleaf",): BRO_1}),
+    ("h2", {CON: dict(sat=0.30, grade=(3.2, 3.8, 6.4), trb=0.9, spec=0.6, sheen=0.3), ("MAT_leaf_broadleaf",): BRO_1}),
+]
+SETN = args[args.index("--set") + 1] if "--set" in args else "1"
+SET2 = SETN in ("2", "3")
+if SETN == "2":
     COLUMN = COLUMN2
+if SETN == "3":
+    WATER2 = WATER3
+    FOLIAGE2 = [(tag, c) for tag, c in FOLIAGE3]
 
 if "--water" in args:          # optional override: --water tag:aniso:far:gain[:olive]  (repeatable)
     WATER = []
@@ -160,6 +176,7 @@ else:
             nm("WATER_WAVE_SCALE").outputs[0].default_value = c.get("wscale", 1.4)
             nm("WATER_WAVE_ANISO").outputs[0].default_value = c.get("waniso", 0.8)
             nm("WATER_MURK_GAIN").inputs["To Min"].default_value = c.get("gain", 0.15)
+            nm("WATER_FINE").outputs[0].default_value = c.get("fine", 1.0)
             if "murk" in c:
                 a_in.default_value = (*c["murk"][0], 1.0); b_in.default_value = (*c["murk"][1], 1.0)
             render(scene, f"p10w_sweep{TAG}_{tag}.png", str(c))
@@ -173,8 +190,11 @@ else:
             base[m.name] = (bs, trm, tuple(trm.inputs[1].default_value), bs.inputs["Specular IOR Level"].default_value,
                             bs.inputs["Roughness"].default_value, bs.inputs["Sheen Weight"].default_value)
         setup(scene, HERO, 1920, 1080, 32, FOLIAGE_WIN)
-        for tag, c in FOLIAGE2:
+        for tag, cc in FOLIAGE2:
             for m in mats:
+                c = cc if "sat" in cc else next((v for k, v in cc.items() if m.name.split(".")[0] in k), None)
+                if c is None:
+                    continue
                 bs, trm, tr0, sp0, ro0, sh0 = base[m.name]
                 node(m, "LEAF_SAT").outputs[0].default_value = c["sat"]
                 node(m, "LEAF_GRADE").outputs[0].default_value = (*c["grade"], 1.0)
