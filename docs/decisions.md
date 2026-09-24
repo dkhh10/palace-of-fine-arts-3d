@@ -1175,3 +1175,13 @@ counts as "dark"; the photo's willow is dense AND bright. Decision: keep the geo
 branches/leaves (one-line, keeps the 1.30 crown width). NE box: crown-top passes (411 vs 398 px), sky 45.8 % and dark 23.6 % fail (ref 34.8 / 15.2)
 for the same colour reason. cam02's new columns cover the rotunda's left base: no plan rule, QA 27 scores it. Export hand-off: impostor rebake and
 new EXPM_*_LOD1_thin rows (Phase 6 budget) when Phase 10 goes to the web.
+
+## 2026-09-24 · Projection r1 early review (docs/reviews/phase10_proj_r1_review_part1.md, 767f9bc): two lead decisions, one hold
+Hold: the registration residual (3.42 px median) is unproven — the reviewer's control shift of 10/20/40 px moved the chamfer median only to 3.47/3.49/3.57
+px, so the metric is flat. The projection engineer must fix the metric (a control shift that at least doubles it, or >= 6 hand-picked points in >= 5 photos)
+and gate impossible cameras (z outside [-0.5, +6] m or distance outside 30-250 m) BEFORE projecting; no photo is baked on an unproven registration.
+Decision (a): texel density 43/50/64/136 texels/m per group instead of the brief's 200 accepted, because the photos resolve only 16-40 px/m and 200
+would be empty upsampling. Decision (b): the 16 shared-mesh columns get per-instance variation (per-object U offset of the atlas sample around the
+column axis via Object Info Random, plus the existing per-instance weathering); a hue/value jitter <= 0.03 with a logged exception only if that is not cheap.
+Merge hook (lead, at merge time): arch_build.py execs arch_uvbake.py after arch_uvproj.py and before the save, refuses to save on `fails` != 0, and
+compares the per-mesh UVBake hash the script writes into uvbake_groups.json.
