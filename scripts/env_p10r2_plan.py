@@ -1,6 +1,6 @@
 """Phase 10 ENV round 2: gates + cam-01 prediction for the hero-shore willow (PLAN entry "P hero-shore willow, ref 169").
 
-    scripts/blender_run.sh 300 -- --background --python scripts/env_p10r2_plan.py -- [--cand X Y H W ...] [--check]
+    scripts/blender_run.sh 300 -- --background --python scripts/env_p10r2_plan.py -- [--cand X Y H W ...] [--add] [--check]
 
 No Blender data is touched (bpy only because qa_cameras / env_trees import it).  For each candidate (and, with
 --check, for the shipped PLAN entry with its env_trees.P10R2_WIDEN factor) it prints the plan's rules:
@@ -51,7 +51,8 @@ def report(x, y, h, w, lagoon, islets, skip, terrain=None, tag="cand"):
     g = L.gallery_offset(x, y)
     gok = g is None or g >= L.GALLERY_KEEPOUT
     ring = math.hypot(x, y) - real_r(sp, w) * h
-    others = [(p[1], p[2]) for p in T.PLAN if not str(p[4]).startswith(skip)] + [(p[1], p[2]) for p in T.P10_ADD]
+    others = [(p[1], p[2]) for p in T.PLAN if not str(p[4]).startswith(skip)] + [(p[1], p[2]) for p in T.P10_ADD] \
+        + [(p[1], p[2]) for p in getattr(T, "P10R2_ADD", []) if p[4] != skip]
     space = min(math.hypot(x - a, y - b) for a, b in others)
     z0 = (terrain(x, y) if terrain else -0.45) - 0.15
     cx, _, d = frame(SPEC["01"], x, y, z0 + 0.6 * h)
@@ -80,12 +81,15 @@ def main():
         v = [float(a) for a in ARGS[ARGS.index("--cand") + 1:] if not a.startswith("--")]
         print("[env_p10r2_plan] candidates (x, y, h, widen)")
         for i in range(0, len(v) - 3, 4):
-            report(*v[i:i + 4], lagoon, islets, KEY + " x 0.3")
+            # --add: a candidate for an APPENDED instance (every PLAN trunk counts for spacing, the moved willow too)
+            report(*v[i:i + 4], lagoon, islets, "\0" if "--add" in ARGS else KEY + " x 0.3")
     if "--check" in ARGS:
         print("[env_p10r2_plan] shipped PLAN entry")
         for (sp, x, y, h, note) in T.PLAN:
             if str(note).startswith(KEY) and note in T.P10R2_WIDEN:
                 bad += 0 if report(x, y, h, T.P10R2_WIDEN[note], lagoon, islets, note, tag="PLAN") else 1
+        for (sp, x, y, h, note, w) in getattr(T, "P10R2_ADD", []):
+            bad += 0 if report(x, y, h, w, lagoon, islets, note, tag="ADD") else 1
         print(f"[env_p10r2_plan] {bad} failing")
     if bad:
         sys.exit(1)

@@ -468,6 +468,14 @@ P10_ADD = [
 CROWN_XY = {"willow": 1.30}
 # Phase 10 round 2: per-instance extra X/Y crown scale for hand-placed PLAN entries, keyed by the full note (applied
 # like a P10_ADD width factor, after the RNG draws).  The ring gates read it (env_r9_replan --verify, env_p10r2_plan).
+# Phase 10 round 2: moving the hero-shore willow onto ref 169's willow (above) bared the podium and stair at cam-01
+# x 0.33-0.37, rows 540-690, where ref 169 has a second, taller pale crown with fine pendulous foliage (x 0.33-0.40,
+# crown-top row 535) - the slot the round-1 9 m willow had been filling (x 0.336-0.417, top row 538).  One more
+# instance of the existing willow prototype (no new prototype), appended like P10_ADD so no existing tree's seed,
+# RNG draw or position changes, at the nearest dry coordinate 3.5 m from the moved willow (env_p10r2_plan --add).
+P10R2_ADD = [
+    ("willow", 7.9, 42.6, 9.0, "P p10r2 pale crown left of the hero-shore willow (ref 169 x 0.33-0.40, crown-top row 535)", 1.0),
+]
 P10R2_WIDEN = {"P hero-shore willow, ref 169 x 0.36-0.44; p10r2 (6.9,43.4) h9 -> here h5.4 w1.7 (ref crown-top row 604)": 1.7}
 FAR_RADIUS = 130.0   # no QA camera within this distance -> LOD0/LOD1 objects use the LOD1/LOD2 mesh
 try:
@@ -1392,9 +1400,21 @@ def build_all(SUB, terrain_height, lagoon_field, islet_fields, quick=False, colo
             assert dry and (off is None or off >= L.GALLERY_KEEPOUT) and ring >= 37.0, \
                 f"P10_ADD {sp} ({x}, {y}) fails a hard gate: dry {dry} gallery {off} ring {ring:.1f}"
             plan.append((sp, x, y, h, note))
+        # Phase 10 round 2, LAST: the crown ref 169 has left of the hero-shore willow (see P10R2_ADD).  Same rule
+        # as P10_ADD (appended, nothing before it changes), and the gates ring the WIDENED crown (CROWN_XY x w)
+        # and keep 3.5 m from every trunk already in the plan.
+        for (sp, x, y, h, note, w) in P10R2_ADD:
+            dry = lagoon_field is None or not (lagoon_field.signed(x, y) < 1.0
+                                               and not any(f.signed(x, y) < 0 for f in islet_fields))
+            off = L.gallery_offset(x, y)
+            ring = math.hypot(x, y) - max(L.CROWN_R.get(sp, 0.35), P10_REAL_R.get(sp, 0.35) * CROWN_XY.get(sp, 1.0) * w) * h
+            space = min(math.hypot(x - e[1], y - e[2]) for e in plan)
+            assert dry and (off is None or off >= L.GALLERY_KEEPOUT) and ring >= 37.0 and space >= 3.5, \
+                f"P10R2_ADD {sp} ({x}, {y}) fails a hard gate: dry {dry} gallery {off} ring {ring:.1f} space {space:.1f}"
+            plan.append((sp, x, y, h, note))
         p10_shadow_report(before, plan, colonnade_polys, lagoon_field, terrain_height)
     rnd = random.Random(77)
-    widen = {note: w for (_sp, _x, _y, _h, note, w) in P10_ADD}
+    widen = {note: w for (_sp, _x, _y, _h, note, w) in P10_ADD + P10R2_ADD}
     widen.update(P10R2_WIDEN)
     counts = {}
     per_species_idx = {}

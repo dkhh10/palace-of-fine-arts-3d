@@ -52,7 +52,8 @@ BLEND = arg("--blend", str(common.ROOT / "master.blend"))
 OUT = common.RENDERS / "previews" / "environment"
 OUT.mkdir(parents=True, exist_ok=True)
 W, H = 1920, 1080
-TARGETS = {"target": "P hero-shore willow, ref 169 x 0.3", "other": "P hero-shore willow, ref 169 x 0.44"}
+TARGETS = {"target": "P hero-shore willow, ref 169 x 0.3", "other": "P hero-shore willow, ref 169 x 0.44",
+           "standin": "P p10r2 pale crown"}          # standin: env_trees.P10R2_ADD (absent in the before state)
 
 t0 = time.time()
 bpy.ops.wm.open_mainfile(filepath=BLEND, load_ui=False)
@@ -82,11 +83,11 @@ scene.camera = cam
 def find(prefix, lod):
     hits = [o for o in bpy.data.objects if o.name.startswith("ENV_tree_willow_") and o.name.endswith(f"_LOD{lod}")
             and str(o.get("note", "")).startswith(prefix)]
-    assert len(hits) == 1, (prefix, [o.name for o in hits])
-    return hits[0]
+    assert len(hits) <= 1, (prefix, [o.name for o in hits])
+    return hits[0] if hits else None
 
 
-objs = {k: find(p, 0) for k, p in TARGETS.items()}
+objs = {k: o for k, o in ((k, find(p, 0)) for k, p in TARGETS.items()) if o is not None}
 info = {}
 for k, o in objs.items():
     bb = [o.matrix_world @ Vector(c) for c in o.bound_box]
@@ -144,7 +145,7 @@ def render_alpha(key):
 
 
 alphas = {}
-for key in ("target", "other"):
+for key in objs:
     isolate(objs[key])
     alphas[key] = render_alpha(key)
     tgt_coll.objects.unlink(objs[key])

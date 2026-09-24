@@ -160,6 +160,13 @@ def verify():
         fails += 0 if ok else 1
         print(f"  {'ok  ' if ok else 'FAIL'} P10 {sp:14s} ({x:6.1f},{y:6.1f}) h{h:4.0f} w{w:.1f} crown {rad:4.1f} "
               f"reaches r {d - rad:5.1f} (ring {PODIUM_R + CLEAR:.0f})   [{str(note)[:40]}]")
+    for (sp, x, y, h, note, w) in getattr(env_trees, "P10R2_ADD", []):
+        d = math.hypot(x, y)
+        rad = max(L.CROWN_R.get(sp, 0.35), env_trees.P10_REAL_R.get(sp, 0.35) * env_trees.CROWN_XY.get(sp, 1.0) * w) * h
+        ok = d - rad >= PODIUM_R + CLEAR and L.gallery_clear(x, y)
+        fails += 0 if ok else 1
+        print(f"  {'ok  ' if ok else 'FAIL'} P10R2_ADD {sp:10s} ({x:6.1f},{y:6.1f}) h{h:4.0f} w{w:.1f} real crown {rad:4.1f} "
+              f"reaches r {d - rad:5.1f} (ring {PODIUM_R + CLEAR:.0f})   [{str(note)[:40]}]")
     print(f"[env_r9_replan] --verify: {fails} failure(s)")
     if fails:
         sys.exit(1)
