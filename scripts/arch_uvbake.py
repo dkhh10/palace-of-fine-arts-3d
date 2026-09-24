@@ -10,10 +10,12 @@ get the layer once, on the shared mesh -- so the 16 columns share ONE atlas regi
 median over every registered view of every visible column (docs/materials_notes.md, Phase 10 r1).
 
 Atlas groups (one 4096 atlas each, UV 0..1):  0 attic, 1 entablature, 2 drum + columns, 3 the lagoon arch.
-Layout: Smart UV Project (60 deg) per group over all its meshes at once (multi-object edit, so texel density is
-uniform across the group), then every island whose faces all look away from the lagoon (face-centre azimuth more
-than 80 deg from face 00's 82 deg) is shrunk to BACK_SCALE, then one pack with rotation.  The registered photos
-span ~57 deg of azimuth around face 00, so the back half carries no photo data and only needs a valid layout.
+Layout: see the comment block above `unwrap_ring` (sector x facing-class planar charts in metres for the rings,
+per-component front projection for the ornament courses, Smart UV Project rescaled to metres for the shared column /
+base meshes and the arch; every island scaled by its visibility weight; one CARDINAL-rotation CONCAVE pack per group).
+Measured 2026-09-24: hero-front (faces 07/00/01, columns) 89 / 102 / 131 / 277 texels per metre, fill 43 / 30 / 46 /
+13 % (the checkpoint's Smart-UV layout: 27 / 19 / 36 / 295).  200 texels/m is out of reach for the attic group in one
+4096 atlas: its 741 m2 of weight-1 faces alone need 29.6 M texels at 200/m, the atlas has 16.8 M.
 
 Checks that fail the run (and block --save): texel overlap (rasterised pixel-centre coverage > 1 at 2048 per group,
 tolerance 0.05 % of covered texels for float ties on shared edges), UV outside 0..1, layer order / active / render
@@ -32,6 +34,8 @@ UV = "UVBake"
 ATLAS = 4096
 BACK_SCALE = 0.25
 MARGIN = 0.0012          # 5 px at 4096: the bleed the projection dilates into
+SHAPE = args[args.index("--shape") + 1] if "--shape" in args else "CONCAVE"
+ROTM = args[args.index("--rot") + 1] if "--rot" in args else "CARDINAL"
 ANGLE = {1: 80.0}        # the entablature's egg / dentil / modillion courses: fewer, larger islands
 FACE_AZ0 = 82.0
 HERO_FACES = (0, 7, 1)
@@ -137,6 +141,156 @@ def to_world(o, pc, pn):
     return c, n
 
 
+# Layout (round-1 fix of the checkpoint's density finding: Smart UV Project joined every octagon ring into one
+# 110 m strip, so the pack could not scale past 19-36 texels/m):
+#   ring meshes     -> charts = (octagon sector of the face centre) x (facing class); each chart is a planar
+#                      projection in METRES in the sector frame (front: tangent x z; soffit/top: tangent x radial;
+#                      side: radial x z; back: -tangent x z); islands = connected faces of one chart.
+#   ornament meshes -> (dentils / modillions / eggs) per connected component: every face that does not look away
+#                      from the component's own front direction is projected on the component's front plane (sides,
+#                      tops and soffits collapse to slivers: a 0.1-0.2 m course is one texel column deep at the
+#                      photo's resolution); the faces looking away go to a small separate island.
+#   shared / arch   -> (the 16 columns, the bases, the archivolt and imposts) Smart UV Project, rescaled to metres.
+#   Every island is then scaled by its WEIGHT = sector weight (faces 07/00/01 1.0, 06/02 0.35, rest 0.12) x class
+#   weight (front 1, soffit / side 0.6, top 0.25, back 0.12), so the atlas spends its texels where the registered
+#   photos (azimuth 59-107 deg, eye height) can see; one pack per group preserves the relative scale.
+SECTOR_W = {0: 1.0, 1: 1.0, 7: 1.0, 2: 0.35, 6: 0.35}
+SECTOR_W_REST = 0.1
+CLASS_W = dict(F=1.0, D=0.5, S=0.5, U=0.1, B=0.08)
+AXIS_R = 6.0          # faces centred within 6 m of the axis (drum / attic caps under the dome) are never seen: 0.05
+ORN_KEYS = ("dentils", "modillions", "eggs")
+
+
+def compass_az(c):
+    return np.degrees(np.arctan2(c[..., 1], -c[..., 0])) % 360.0
+
+
+def az_vec(az):
+    a = np.radians(az)
+    return np.stack([-np.cos(a), np.sin(a), np.zeros_like(a)], -1)
+
+
+def sector_of(c):
+    return np.round(((compass_az(c) - FACE_AZ0) % 360.0) / 45.0).astype(int) % 8
+
+
+def mesh_arrays(o):
+    me = o.data
+    mw = np.array(world_matrix(o))
+    co = np.zeros(len(me.vertices) * 3, np.float64); me.vertices.foreach_get("co", co)
+    wco = co.reshape(-1, 3) @ mw[:3, :3].T + mw[:3, 3]
+    nf = len(me.polygons)
+    fc = np.zeros(nf * 3); me.polygons.foreach_get("center", fc)
+    fn = np.zeros(nf * 3); me.polygons.foreach_get("normal", fn)
+    fc = fc.reshape(-1, 3) @ mw[:3, :3].T + mw[:3, 3]
+    fn = fn.reshape(-1, 3) @ np.linalg.inv(mw[:3, :3])
+    fn /= np.maximum(np.linalg.norm(fn, axis=1, keepdims=True), 1e-12)
+    ls = np.zeros(nf, np.int32); me.polygons.foreach_get("loop_start", ls)
+    lt = np.zeros(nf, np.int32); me.polygons.foreach_get("loop_total", lt)
+    lv = np.zeros(len(me.loops), np.int32); me.loops.foreach_get("vertex_index", lv)
+    lface = np.repeat(np.arange(nf), lt)
+    return wco, fc, fn, lv, lface
+
+
+def components(me, label):
+    """Connected components of faces across edges, restricted to faces with the same label."""
+    nf = len(me.polygons)
+    parent = np.arange(nf)
+    def find(i):
+        r = i
+        while parent[r] != r:
+            r = parent[r]
+        while parent[i] != r:
+            parent[i], i = r, parent[i]
+        return r
+    ek = {}
+    for p in me.polygons:
+        for ek_ in p.edge_keys:
+            ek.setdefault(ek_, []).append(p.index)
+    for fs in ek.values():
+        for a, b in zip(fs[:-1], fs[1:]):
+            if label[a] == label[b]:
+                ra, rb = find(a), find(b)
+                if ra != rb:
+                    parent[ra] = rb
+    return np.array([find(i) for i in range(nf)])
+
+
+def unwrap_ring(o):
+    """Returns per-loop UV (metres x weight, charts offset apart), per-face weight."""
+    me = o.data
+    wco, fc, fn, lv, lface = mesh_arrays(o)
+    sec = sector_of(fc)
+    d = az_vec(FACE_AZ0 + 45.0 * sec)
+    z = np.array([0, 0, 1.0])
+    t = np.cross(z, d)
+    nd, nz, nt = (fn * d).sum(1), fn[:, 2], (fn * t).sum(1)
+    cls = np.where(nz >= 0.6, "U", np.where(nz <= -0.6, "D", np.where(nd >= 0.35, "F",
+                   np.where(nd <= -0.35, "B", "S"))))
+    code = sec * 8 + np.searchsorted(np.array(sorted("BDFSU")), cls)
+    comp = components(me, code)
+    w = np.array([SECTOR_W.get(int(s), SECTOR_W_REST) for s in sec]) * np.array([CLASS_W[c] for c in cls])
+    w = np.where(np.hypot(fc[:, 0], fc[:, 1]) < AXIS_R, 0.05, w)
+    P = wco[lv]
+    f = lface
+    dl, tl = d[f], t[f]
+    pz, pd, pt = P[:, 2], (P * dl).sum(1), (P * tl).sum(1)
+    c = cls[f]
+    u = np.select([c == "F", c == "B", c == "U", c == "D", c == "S"],
+                  [pt, -pt, pt, pt, pd * np.sign(nt[f] + 1e-9)])
+    v = np.select([c == "F", c == "B", c == "U", c == "D", c == "S"], [pz, pz, pd, -pd, pz])
+    return np.stack([u, v], 1) * w[f][:, None], comp[f], w, cls
+
+
+def unwrap_orn(o):
+    me = o.data
+    wco, fc, fn, lv, lface = mesh_arrays(o)
+    comp0 = components(me, np.zeros(len(me.polygons), int))
+    area = np.zeros(len(me.polygons)); me.polygons.foreach_get("area", area)
+    fdir = np.zeros((len(me.polygons), 3))
+    for r in np.unique(comp0):
+        m = comp0 == r
+        rad = az_vec(compass_az(fc[m].mean(0)))
+        nn = fn[m] * area[m, None]
+        nn = nn[(fn[m] @ rad) > 0.2].sum(0)
+        nn[2] = 0.0
+        dd = nn / np.linalg.norm(nn) if np.linalg.norm(nn) > 1e-9 else rad
+        fdir[m] = dd
+    away = (fn * fdir).sum(1) < -0.05
+    comp = components(me, comp0 * 2 + away)
+    sec = sector_of(fc)
+    w = np.array([SECTOR_W.get(int(s), SECTOR_W_REST) for s in sec]) * np.where(away, CLASS_W["B"], 1.0)
+    z = np.array([0, 0, 1.0])
+    t = np.cross(z, fdir)
+    P = wco[lv]; f = lface
+    u = (P * t[f]).sum(1) * np.where(away[f], -1.0, 1.0)
+    v = P[:, 2]
+    cls = np.where(away, "B", "F")
+    return np.stack([u, v], 1) * w[f][:, None], comp[f], w, cls
+
+
+def rescale_smart(o, weight=1.0):
+    """Smart-projected UVs -> metres (per mesh: sqrt(3D area / UV area)) x weight."""
+    me = o.data
+    uvl = me.uv_layers[UV]
+    uv = np.zeros(len(me.loops) * 2); uvl.data.foreach_get("uv", uv); uv = uv.reshape(-1, 2)
+    me.calc_loop_triangles()
+    n = len(me.loop_triangles)
+    li = np.zeros(n * 3, np.int32); me.loop_triangles.foreach_get("loops", li)
+    vi = np.zeros(n * 3, np.int32); me.loop_triangles.foreach_get("vertices", vi)
+    wco, *_ = mesh_arrays(o)
+    P = wco[vi].reshape(n, 3, 3); U = uv[li].reshape(n, 3, 2)
+    a3 = 0.5 * np.linalg.norm(np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0]), axis=1).sum()
+    e = U[:, 1:] - U[:, :1]
+    a2 = 0.5 * np.abs(e[:, 0, 0] * e[:, 1, 1] - e[:, 0, 1] * e[:, 1, 0]).sum()
+    uvl.data.foreach_set("uv", (uv * math.sqrt(a3 / max(a2, 1e-12)) * weight).ravel())
+
+
+def is_smart(o, g):
+    return g == 3 or "column" in o.data.name or "colbase" in o.data.name
+
+
+FACE_W = {}           # mesh name -> per-face weight (the report's hero-front density uses weight == 1)
 vis_state = {}
 for g, rl in reps.items():
     for o in rl:
@@ -149,63 +303,50 @@ for g, rl in reps.items():
         me.uv_layers.new(name=UV, do_init=False)
         me.uv_layers.active = me.uv_layers[UV]
         o.hide_set(False); o.hide_viewport = False
+    smart = [o for o in rl if is_smart(o, g)]
+    if smart:
+        for o in smart:
+            o.select_set(True)
+        bpy.context.view_layer.objects.active = smart[0]
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.uv.smart_project(angle_limit=math.radians(60.0), island_margin=0.0, area_weight=0.0,
+                                 correct_aspect=True, scale_to_bounds=False)
+        bpy.ops.object.mode_set(mode="OBJECT")
+        for o in smart:
+            o.select_set(False)
+            rescale_smart(o)
+            FACE_W[o.data.name] = np.ones(len(o.data.polygons))
+            print(f"[uvbake]   {o.data.name:40s} smart project, metres, weight 1")
+    off = 0.0
+    for o in rl:
+        if is_smart(o, g):
+            continue
+        orn = any(k in o.data.name for k in ORN_KEYS)
+        uv, comp_l, w, cls = (unwrap_orn if orn else unwrap_ring)(o)
+        # separate every island in UV space before the pack (Blender finds islands by UV connectivity):
+        # island k gets its own 0.0 origin shifted by a unique offset along u
+        ids, inv = np.unique(comp_l, return_inverse=True)
+        mn = np.full((len(ids), 2), np.inf)
+        np.minimum.at(mn, inv, uv)
+        mx = np.full((len(ids), 2), -np.inf)
+        np.maximum.at(mx, inv, uv)
+        wid = mx[:, 0] - mn[:, 0] + 1.0
+        start = off + np.concatenate([[0.0], np.cumsum(wid)[:-1]])
+        off = start[-1] + wid[-1]
+        uv = uv - mn[inv] + np.stack([start[inv], np.zeros(len(inv))], 1)
+        o.data.uv_layers[UV].data.foreach_set("uv", uv.ravel())
+        FACE_W[o.data.name] = w
+        print(f"[uvbake]   {o.data.name:40s} {'ornament' if orn else 'ring':8s} islands {len(ids):5d} "
+              f"faces weight-1 {int((w >= 1).sum())}/{len(w)} classes "
+              f"{ {c: int((cls == c).sum()) for c in 'FDSUB' if (cls == c).any()} }")
+    for o in rl:
         o.select_set(True)
     bpy.context.view_layer.objects.active = rl[0]
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.select_all(action="SELECT")
-    bpy.ops.uv.smart_project(angle_limit=math.radians(ANGLE.get(g, 60.0)), island_margin=0.0, area_weight=0.0,
-                             correct_aspect=True, scale_to_bounds=False)
-    bpy.ops.object.mode_set(mode="OBJECT")
-    # shrink back-facing islands (shared meshes -- columns, bases -- are seen at every azimuth: kept at 1)
-    for o in rl:
-        me = o.data
-        shared = "column" in me.name or "colbase" in me.name
-        bm = bmesh.new(); bm.from_mesh(me)
-        uvl = bm.loops.layers.uv[UV]
-        bm.faces.ensure_lookup_table()
-        pc = np.array([f.calc_center_median() for f in bm.faces])
-        pn = np.array([f.normal for f in bm.faces])
-        w = np.ones(len(bm.faces)) if shared else face_weight(*to_world(o, pc, pn))
-        # islands: union faces across edges whose two sides carry the same UVs
-        parent = list(range(len(bm.faces)))
-
-        def find(i):
-            while parent[i] != i:
-                parent[i] = parent[parent[i]]
-                i = parent[i]
-            return i
-        for e in bm.edges:
-            lf = e.link_loops
-            if len(lf) != 2:
-                continue
-            l1, l2 = lf
-            a1, b1 = l1[uvl].uv, l1.link_loop_next[uvl].uv
-            a2, b2 = l2.link_loop_next[uvl].uv, l2[uvl].uv
-            if (a1 - a2).length < 1e-6 and (b1 - b2).length < 1e-6:
-                ra, rb = find(l1.face.index), find(l2.face.index)
-                if ra != rb:
-                    parent[ra] = rb
-        isl = {}
-        for f in bm.faces:
-            isl.setdefault(find(f.index), []).append(f)
-        n_back = 0
-        for faces in isl.values():
-            sc = max(w[f.index] for f in faces)
-            if sc >= 1.0:
-                continue
-            n_back += 1
-            pts = [l[uvl].uv.copy() for f in faces for l in f.loops]
-            cx = sum(p.x for p in pts) / len(pts); cy = sum(p.y for p in pts) / len(pts)
-            for f in faces:
-                for l in f.loops:
-                    u = l[uvl].uv
-                    l[uvl].uv = (cx + (u.x - cx) * sc, cy + (u.y - cy) * sc)
-        bm.to_mesh(me); bm.free()
-        print(f"[uvbake]   {me.name:40s} islands {len(isl):5d} shrunk {n_back:5d} faces weight-1 {int((w >= 1).sum())}/{len(w)}")
-    bpy.ops.object.mode_set(mode="EDIT")
-    bpy.ops.mesh.select_all(action="SELECT")
     bpy.ops.uv.select_all(action="SELECT")
-    bpy.ops.uv.pack_islands(rotate=True, scale=True, margin_method="FRACTION", margin=MARGIN, shape_method="CONCAVE")
+    bpy.ops.uv.pack_islands(rotate=True, scale=True, margin_method="FRACTION", margin=MARGIN, shape_method=SHAPE, rotate_method=ROTM)
     bpy.ops.object.mode_set(mode="OBJECT")
     for o in rl:
         o.select_set(False)
@@ -272,10 +413,8 @@ for g, rl in reps.items():
         e = uvt[:, 1:] - uvt[:, :1]
         a2 = 0.5 * np.abs(e[:, 0, 0] * e[:, 1, 1] - e[:, 0, 1] * e[:, 1, 0])
         pc = P.mean(1)
-        shared = "column" in me.name or "colbase" in me.name
-        fn = np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0])
-        fn /= np.maximum(np.linalg.norm(fn, axis=1, keepdims=True), 1e-12)
-        w = np.ones(n) if shared else face_weight(pc, fn)
+        tp = np.zeros(n, np.int32); me.loop_triangles.foreach_get("polygon_index", tp)
+        w = FACE_W[me.name][tp]
         front = (w >= 1.0) & (a3 > 1e-6)
         if front.any():
             dens.append((float(a3[front].sum()), float(a2[front].sum())))
@@ -285,6 +424,7 @@ for g, rl in reps.items():
         TU.append(uvt)
     TU = np.concatenate(TU)
     cnt = raster_count(TU, RES_CHK)
+    np.save(OUT / "work" / f"uvcov_{g}.npy", np.packbits(cnt > 0))
     cov = (cnt > 0).sum(); ovl = (cnt > 1).sum()
     a3f = sum(d[0] for d in dens); a2f = sum(d[1] for d in dens)
     tpm = math.sqrt(a2f * ATLAS * ATLAS / a3f) if a3f > 0 else 0.0
@@ -294,7 +434,7 @@ for g, rl in reps.items():
                      coverage=float(cov / RES_CHK ** 2), overlap_texels=int(ovl), overlap_frac=float(ovl / max(cov, 1)),
                      texels_per_m_front=tpm, front_area_m2=a3f)
     print(f"[uvbake] group {g}: tris {len(TU)} atlas fill {100 * cov / RES_CHK ** 2:.1f} % overlap texels {ovl} "
-          f"({100 * ovl / max(cov, 1):.3f} %) {'FAIL' if bad else 'OK'}; lagoon-side {a3f:.0f} m2 at "
+          f"({100 * ovl / max(cov, 1):.3f} %) {'FAIL' if bad else 'OK'}; weight-1 (faces 07/00/01 front, columns) {a3f:.0f} m2 at "
           f"{tpm:.0f} texels/m @ {ATLAS}")
 
 json.dump({str(g): v["objects"] for g, v in report.items()}, open(OUT / "uvbake_groups.json", "w"), indent=1)
