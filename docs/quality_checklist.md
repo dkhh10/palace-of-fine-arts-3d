@@ -1075,3 +1075,16 @@ never override the tiles. Full report `docs/qa_round_16.md`; composite `renders/
 4. **Byte-close is a gate check, not a formality.** Stations 3 and 4 moved 0.001 % / 0.000 % and station 4 not at all — which is what lets
    the round leave their carried defects unre-scored and keeps the gate short.
 5. **Scores.** Desktop 01 **4.05** · 02 **3.55** · 03 3.08 · 04 3.05 · 05 3.24 · 06 **3.15**; mobile **3.44 / 3.63 / 2.77 / 2.87 / 3.00 / 2.70**.
+
+## QA round 27 (Phase 10 gate on the Cycles master, cycles_p10 vs cycles_p9, 2026-09-24) — **PHASE 10 GATE PASSED; hero 4.26**
+1. **A shelved layer is proven a no-op by pixels, not by the node factor.** The weight-0 atlas left the hero stone boxes within 0.4 lum / 0.2 deg
+   (max |d| <= 7 levels on 0.05 % of pixels) and cam04 byte-close, so the round-9 anisotropy / std-ratio did not need re-running.
+2. **At 32 spp a per-pixel "moved" share is noise.** 32 vs 64 spp of the same frame moves 37 % of pixels by > 4 levels, but only 5.4 % of 8x8 block
+   means. Use block means (`qa_r27_probe.bmoved`) before explaining regressions.
+3. **A tint tuned in sunlight must be checked in shade.** The column retune landed the sunlit hero shafts on ref 169 (mask 103.2 / 28.7 / .616 vs
+   96.8 / 24.8 / .585), yet pushed shaded shafts violet at cam02 (hue 288 -> 251) and mauve at cam06 (21 -> 344). Measure every station that
+   sees the material in shade, not just the hero box.
+4. **Composition fixes and colour fixes are separate rows.** The new cypresses stand where ref 169 / 062 / 063 have dark conifers (hero sky share
+   58.7 -> 45.5 % vs 34.8), but they read lime in sun and blue-grey in shade. Placement earns the foliage row; colour holds it back.
+5. **Scores.** Cycles 01 **4.26** · 02 3.51 · 03 3.12 · 04 3.05 · 05 **3.37** · 06 3.15 (deltas vs QA 26 +0.21 / -0.04 / +0.04 / 0 / +0.13 / 0);
+   name sweep 520 exempt / 0 hits; ray test 95 rays / 0 fails (hero, cam02, cam03 incl. the colonnade fan, cam04 all 8 bays).
