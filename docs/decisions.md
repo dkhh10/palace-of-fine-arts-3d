@@ -1202,3 +1202,13 @@ Decision: merge on the review, retune the two holds in the round-2 materials pas
 Exception logged (decision (b)): a per-object U offset is impossible because the shaft charts are Smart-UV islands, not one cylinder strip; the columns carry
 +-3 % value jitter plus a 0.6-1.0 per-object share of the projected map. Residuals for docs/delivery.md: ORN attic reliefs unreachable without an ORN UVBake
 layer; colonnade uncovered; east-shore backdrop houses stand where photo stations are (ENV). The agent ran ~6.5 h against a 5 h cap to close the review items.
+
+## 2026-09-24 · PROJECTION SHELVED AT WEIGHT 0 (lead; phase10-proj merged e4116b8 for its infrastructure; review docs/reviews/phase10_proj_r1_review.md)
+The final review's fixes showed the registration does not hold: held-out split test median 20.4 px (fit half 0.5 px; the two halves pull opposite ways in x,
+a per-image scale error a rotation cannot fix), and a land gate drops 40 of the 43 used cameras (28 of 71 centres inside the lagoon polygon). The projection
+engineer rightly refused to re-project from the 3 survivors. Decision: the atlas ships at integration weight 0 (an exact no-op, `--r9-removal tied`); the
+UVBake layer, the scripts, the evidence and the recipe stay merged so a future round can re-run from a per-image scale solve (PnP from >= 6 hand picks) or
+from a controlled site capture (option C). No projection round 2: the stop rule (two rounds, one gate) and the budget stand. Round 2 = materials (water,
+foliage colour, column tint as a plain retune). arch_build.py hook wired and verified (renders/logs/p10_arch_hook_check2.log): a fresh build re-lays 4 ornament
+courses, so the stale-atlas hash is a warning inside the hook and strict when arch_uvbake.py runs directly. Residuals for delivery.md: registration, ORN
+reliefs without UVBake, colonnade uncovered, round-1 "before" renders not the true pre-Phase-10 state (atlas-off fixed afterwards).
